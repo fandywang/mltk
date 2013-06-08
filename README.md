@@ -1,6 +1,6 @@
 ### MLTK 
 =============
-MLTK -- the Machine Learning Toolkit -- is a suite of open source C++ modules supporting research and development in Machine Learning.
+The Machine Learning Toolkit (MLTK) is an open source C++ library supporting research and development in Machine Learning.
 
 ### Copyright and license 
 ========
