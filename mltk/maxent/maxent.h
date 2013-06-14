@@ -44,8 +44,7 @@ typedef struct {
 //   3. supporting cross validation
 class MaxEnt {
  public:
-  MaxEnt() : optimization_method_(LBFGS), l1reg_(0), l2reg_(0),
-    num_heldout_(0), ref_model_(NULL) {}
+  MaxEnt() : optimization_method_(LBFGS), l1reg_(0), l2reg_(0) {}
   ~MaxEnt() { Clear(); }
 
   // Load model from file.
