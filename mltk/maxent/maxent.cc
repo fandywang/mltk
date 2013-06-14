@@ -87,7 +87,7 @@ int32_t MaxEnt::Train(const std::vector<Instance>& instances) {
 }
 
 void MaxEnt::AddInstance(const Instance& instance) {
-  // TODO(FANDYWANG): 可以优化，避免拷贝
+  // TODO(fandywang): 可以优化，避免拷贝
   MaxEntInstance me_instance;
   me_instance.label = label_vocab_.Put(instance.label());
   if (me_instance.label > Feature::MAX_LABEL_TYPES) {
@@ -228,7 +228,7 @@ int32_t MaxEnt::Train() {
   }
 
   // 有效特征数统计
-  int num_active = 0;
+  int32_t num_active = 0;
   for (int32_t i = 0; i < feature_vocab_.Size(); ++i) {
     if (lambdas_[i] != 0) { ++num_active; }
   }
@@ -350,7 +350,12 @@ int32_t MaxEnt::PerformQuasiNewton() {
   for (int32_t i = 0; i < dim; ++i) { x0[i] = lambdas_[i]; }
 
   std::vector<double> x;
-  if (l1reg_ > 0) {
+  if (l1reg_ > 0 || optimization_method_ == OWLQN) {
+    // NOTE(l1reg_ > 0): The LBFGS limited-memory quasi-Newton method is the
+    // algorithm of choice for optimizing the parameters of large-scale
+    // log-linear models with L2-regularization, but it cannot be used for an
+    // L1-regularized loss due to its non-diﬀerentiability whenever some
+    // parameter is zero.
     std::cerr << "performing OWLQN" << std::endl;
     x = PerformOWLQN(x0, l1reg_);
   } else {
@@ -366,12 +371,12 @@ int32_t MaxEnt::PerformQuasiNewton() {
 double MaxEnt::FunctionGradient(const std::vector<double>& x,
                                 std::vector<double>& grad) {
   assert(static_cast<size_t>(feature_vocab_.Size()) == x.size());
-  for (size_t i = 0; i < x.size(); ++i) {
-    lambdas_[i] = x[i];
-  }
+
+  for (size_t i = 0; i < x.size(); ++i) { lambdas_[i] = x[i]; }
 
   double score = UpdateModelExpectation();
 
+  // update gradient
   if (l2reg_ == 0) {
     for (size_t i = 0; i < x.size(); ++i) {
       grad[i] = -(empirical_expectation_[i] - model_expectation_[i]);
@@ -392,9 +397,7 @@ double MaxEnt::UpdateModelExpectation() {
   int32_t ncorrect = 0;
 
   model_expectation_.resize(feature_vocab_.Size());
-  for (int i = 0; i < feature_vocab_.Size(); ++i) {
-    model_expectation_[i] = 0;
-  }
+  for (int i = 0; i < feature_vocab_.Size(); ++i) { model_expectation_[i] = 0; }
 
   for (std::vector<MaxEntInstance>::const_iterator citer
        = me_instances_.begin();
@@ -423,10 +426,7 @@ double MaxEnt::UpdateModelExpectation() {
 
   for (int32_t i = 0; i < feature_vocab_.Size(); ++i) {
     model_expectation_[i] /= me_instances_.size();
-    // TODO(fandywang): why ?
-    if (l2reg_ > 0) {
-      logl -= lambdas_[i] * lambdas_[i] * l2reg_;
-    }
+    if (l2reg_ > 0) { logl -= lambdas_[i] * lambdas_[i] * l2reg_; }
   }
 
   train_error_ = 1 - static_cast<double>(ncorrect) / me_instances_.size();
@@ -456,7 +456,6 @@ double MaxEnt::CalcHeldoutLikelihood() {
 // p(y | x)
 int32_t MaxEnt::Classify(const MaxEntInstance& me_instance,
                          std::vector<double>* prob_dist) const {
-  //  vector<double> prob_dist(_num_classes);
   assert(num_classes_ == static_cast<int32_t>(prob_dist->size()));
 
   CalcConditionalProbability(me_instance, prob_dist);
@@ -470,6 +469,7 @@ int32_t MaxEnt::Classify(const MaxEntInstance& me_instance,
       max_prob = (*prob_dist)[i];
     }
   }
+
   return max_label;
 }
 
@@ -513,6 +513,7 @@ int32_t MaxEnt::CalcConditionalProbability(
     }
   }
   assert(max_label >= 0);
+
   return max_label;
 }
 

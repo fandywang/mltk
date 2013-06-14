@@ -4,6 +4,19 @@
 // MaxEnt implements the maximum entropy model, also named multi-nominal
 // logistic regression model, which is usually used in Natural Language
 // Processing.
+//
+// Features:
+//   1. supporting real-valued features.
+//   2. supporting parameter estimation algorithms, including LBFGS, OWLQN
+//      and SGD.
+//   3. supporting incremental learning.
+//
+// TODO(fandywang):
+//   1. add unittest.
+//   2. add apps, like [hierarchial] text classifcation and part-of-speech
+//   tagging (POS).
+//   3. supporting metric calculation.
+//   4. supporting cross validation.
 
 #ifndef MLTK_MAXENT_MAXENT_H_
 #define MLTK_MAXENT_MAXENT_H_
@@ -32,16 +45,6 @@ typedef struct {
   std::vector<double> ref_prob_dist;  // reference probability distribution
 } MaxEntInstance;
 
-// Features:
-//   1. supporting real-valued features.
-//   2. supporting parameter estimation algorithms, including LBFGS, OWLQN
-//      and SGD.
-//   3. supporting incremental learning.
-//
-// TODO(fandywang):
-//   1. add unittest
-//   2. add apps
-//   3. supporting cross validation
 class MaxEnt {
  public:
   MaxEnt() : optimization_method_(LBFGS), l1reg_(0), l2reg_(0) {}
@@ -145,7 +148,12 @@ class MaxEnt {
  private:
   int32_t num_classes_;
 
-  std::vector<MaxEntInstance> me_instances_;  // vector of training samples
+  // training data
+  std::vector<MaxEntInstance> me_instances_;
+
+  // heldout data
+  int32_t num_heldout_;
+  std::vector<MaxEntInstance> heldout_;
 
   Vocabulary featurename_vocab_;  // x:feature_name <--> id
 
@@ -154,6 +162,10 @@ class MaxEnt {
   FeatureVocabulary feature_vocab_;  // f(x, y)
 
   std::vector<double> lambdas_;  // vector of lambda, 即 f(x, y) 对应的 weight
+
+  // all possible features f(x, y), format:
+  // [featurename_id, [feature_id1, feature_id2, ...]]
+  std::vector<std::vector<int> > all_me_features_;
 
   const MaxEnt* ref_model_;  // reference model
 
@@ -166,14 +178,6 @@ class MaxEnt {
   //
   // E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
   std::vector<double> model_expectation_;
-
-  // 所有可能的 Feature f(x, y), 格式为:
-  // [feaure_name_id, [class1_feature_id, class2_feature_id, ...]]
-  std::vector<std::vector<int> > all_me_features_;
-
-  // heldout data
-  int32_t num_heldout_;
-  std::vector<MaxEntInstance> heldout_;
 
   // Note: OWLQN and SGD are available only for L1-regularization
   enum OPTIMIZATION_METHOD { LBFGS, OWLQN, SGD } optimization_method_;
