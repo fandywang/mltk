@@ -1,3 +1,6 @@
+// Copyright (c) 2013 MLTK project.
+// Author: Lifeng Wang (ofandywang@gmail.com)
+
 #include "mltk/maxent/maxent.h"
 
 #include <assert.h>

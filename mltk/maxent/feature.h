@@ -1,5 +1,5 @@
-// Copyright (c) 2013 Tencent Inc.
-// Author: Lifeng Wang (fandywang@tencent.com)
+// Copyright (c) 2013 MLTK project.
+// Author: Lifeng Wang (ofandywang@gmail.com)
 //
 // The Feature class.
 

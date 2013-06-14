@@ -1,5 +1,5 @@
 // Copyright (c) 2013 MaxEnt Project.
-// Author: Lifeng Wang (fandywang@tencent.com)
+// Author: Lifeng Wang (ofandywang@gmail.com)
 //
 // The Instance class.
 

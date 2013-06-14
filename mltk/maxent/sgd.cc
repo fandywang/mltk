@@ -1,3 +1,6 @@
+// Copyright (c) 2013 MLTK Project.
+// Author: Lifeng Wang (ofandywang@gmail.com)
+
 #include "mltk/maxent/maxent.h"
 
 #include <math.h>
