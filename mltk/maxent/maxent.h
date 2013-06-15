@@ -5,6 +5,10 @@
 // logistic regression model, which is usually used in Natural Language
 // Processing.
 //
+// Specifically, MaxEnt is mainly reconstructed and optimizated based on
+// 'http://www-tsujii.is.s.u-tokyo.ac.jp/~tsuruoka/maxent/', yet anothor simple
+// C++ library for maximum entropy classification.
+//
 // Maximum Entropy Principle:
 //
 //    To select a model from a set C of allowed probability distributions,
@@ -96,7 +100,7 @@
 //    1. add unittest.
 //    2. add apps, like [hierarchial] text classification and part-of-speech
 //       tagging (POS).
-//    3. supporting metric calculation.
+//    3. supporting trainer and predictor tools.
 
 #ifndef MLTK_MAXENT_MAXENT_H_
 #define MLTK_MAXENT_MAXENT_H_
@@ -120,13 +124,10 @@ class Instance;
 namespace maxent {
 
 typedef struct {
-  // 类别 id
-  int32_t label;
+  int32_t label;  // class id
 
-  // 特征向量
-  std::vector<std::pair<int32_t, double> > features;
+  std::vector<std::pair<int32_t, double> > features;  // vector of features
 
-  // 先验分布, 比如人工指定, 或者在已有模型基础上支持增量训练.
   std::vector<double> ref_prob_dist;  // reference probability distribution
 } MaxEntInstance;
 
@@ -219,11 +220,10 @@ class MaxEnt {
                                mltk::common::DoubleVector& x,
                                mltk::common::DoubleVector& grad1);
 
-  // 预估输入样本 me_instance 的类别分布.
   int32_t Classify(const MaxEntInstance& me_instance,
                    std::vector<double>* prob_dist) const;
 
-  // 预估样本 me_instance 的条件概率分布 prob_dist: p(y|x)
+  // calculate p(y|x)
   int32_t CalcConditionalProbability(const MaxEntInstance& me_instance,
                                      std::vector<double>* prob_dist) const;
 
@@ -241,7 +241,8 @@ class MaxEnt {
 
   mltk::common::Vocabulary featurename_vocab_;  // featurename mapping, {x : id}
   mltk::common::Vocabulary label_vocab_;  // labelname mapping, {y : id}
-  mltk::common::FeatureVocabulary feature_vocab_;  // vocabulary of features, f(x, y)
+  mltk::common::FeatureVocabulary feature_vocab_;  // vocabulary of features,
+                                                   // f(x, y)
 
   std::vector<double> lambdas_;  // vector of lambda, weight for feature f(x, y)
 
