@@ -7,6 +7,7 @@
 #define MLTK_COMMON_FEATURE_VOCABULARY_H_
 
 #include <assert.h>
+#include <stdint.h>
 #include <map>
 #include <vector>
 

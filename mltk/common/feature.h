@@ -7,6 +7,7 @@
 #define MLTK_COMMON_FEATURE_H_
 
 #include <assert.h>
+#include <stdint.h>
 
 namespace mltk {
 namespace common {

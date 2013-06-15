@@ -5,18 +5,98 @@
 // logistic regression model, which is usually used in Natural Language
 // Processing.
 //
-// Features:
-//   1. supporting real-valued features.
-//   2. supporting many parameter estimation algorithms, including LBFGS, OWLQN
-//      and SGD.
-//   3. supporting incremental learning.
+// Maximum Entropy Principle:
 //
-// TODO(fandywang):
-//   1. add unittest.
-//   2. add apps, like [hierarchial] text classification and part-of-speech
-//   tagging (POS).
-//   3. supporting metric calculation.
-//   4. supporting cross validation.
+//    To select a model from a set C of allowed probability distributions,
+//    choose the model p^\star \in C with maximum entropy H(p):
+//
+//         p^\star = argmax_{p \in C} H(p)
+//
+//    Where H(p) = - \sum_{x,y} {p1(x) * p(y|x) log p(y|x)}
+//          C = {p \in P | E_p(f_i) = E_p1(f_i), i = 1,2,...,n}
+//          p1(f) = \sum_{x,y} {p1(x,y) * f(x,y)}
+//          p(f) = \sum_{x,y} {p1(x) * p(y|x) * f(x,y)}, f is a feature function
+//
+// Maximum Likelihood:
+//
+//    Refer to 'Adam L. Berger, Stephen A.Della Pietra, Vincent J. Della Pietra.
+//    1996. A Maximum Entropy Approach to Natural Language Processing. ACL',
+//    we know that the model p^\star \in C with maximum entropy is the model
+//    in the parametric family p_\lambda (y|x) that maximizes the likelihood of
+//    the training sample p1.
+//
+//    The log-likelihood L_p1 (p) of the empirical distribution p1(x,y) as
+//    predicted by a model p(y|x) is defined by
+//
+//       L_p1 (p) = log {\prod_{x,y} {p(y|x)^p1(x,y)}}
+//                = \sum_{x,y} {p1(x,y) * log p(y|x)}
+//                = \sum_{x,y} {p1(x,y) * \sum_i {\lambda_i * f_i (x,y)}}
+//                  - \sum_x,y {p1(x,y) * log Z_\lambda(x)}
+//                = \sum_x,y {p1(x,y) *\ sum_i {\lambda_i * f_i(x,y)}}
+//                  - \sum_x {p1(x) * log Z_\lambda(x)}
+//
+//    Where p(y|x) = exp (\sum_i {\lambda_i * f_i(x,y)}) / Z_\lambda (x)
+//          Z_\lambda (x) = \sum_y (exp (\sum_i {\lambda_i * f_i(x,y)}))
+//
+//    The most important practical consequence of this result is that any
+//    algorithm for finding the maximum \lambda^\star of L_p1 (p) can be used
+//    to find the maximum p^\star of H(p) for p \in C.
+//
+//    Finally, we pose the unconstrained optimization problem:
+//
+//         Find \lambda^\star = argmax_\lambda L_p1(p)
+//                            = argmin_\lambda -L_p1(p)
+//
+// Parameter Estimation:
+//
+//    For all but the most simple problems, the \lambda^\star that maximize
+//    L_p1(p) cannot be found analytically. Instead, we must resort to mumerical
+//    methods, like IIS, GIS, GD, SGD, Newton's Methods, Quasi-Newton Methods,
+//    etc. MaxEnt implements three fast algorithms, LBFGS, OWLQN and SGD.
+//
+//    Refer to:
+//      Jorge Nocedal. 1980. Updating Quasi-Newton Matrices with Limited
+//      Storage, Mathematics of Computation.
+//
+//      Galen Andrew and Jianfeng Gao. 2007. Scalable training of L1-regularized
+//      log-linear models, In Proceedings of ICML.
+//
+//      Yoshimasa Tsuruoka, Jun'ichi Tsujii, and Sophia Ananiadou. 2009.
+//      Stochastic Gradient Descent Training for L1-regularized Log-linear
+//      Models with Cumulative Penalty, In Proceedings of ACL-IJCNLP.
+//
+// Regularization:
+//
+//    Log-linear models are used in a variety of forms in maching learning,
+//    and the parameters of such models are typically trained to minimize an
+//    objective function
+//
+//        f(\lambda) = l(\lambda) + r(\lambda)
+//
+//    where l is the negative log-probability of a labelled training samples
+//    according to the model, and r is a regularization term that favors
+//    simpler models. It is well-known that the use of regularization is
+//    necessary to achieve a model that generalizes well to unseen data,
+//    particularly if the number of parameters is very high relative to the
+//    amount of training data.
+//
+//    We focus on two kinds of commonly used regularizations, L1-Regularization
+//    and L2-Regularization. They defined by
+//
+//       L1-Reg: r(\lambda) = a * ||\lambda||_1 = a * sum_i |\lambda_i|, a > 0
+//       L2-Reg: r(\lambda) = a * ||\lambda||_2 = a * sum_i \lambda_i^2, a > 0
+//
+// Features:
+//    1. supporting real-valued features.
+//    2. supporting many parameter estimation algorithms, including LBFGS,
+//       OWLQN and SGD.
+//    3. supporting incremental learning.
+//
+// TODO:
+//    1. add unittest.
+//    2. add apps, like [hierarchial] text classification and part-of-speech
+//       tagging (POS).
+//    3. supporting metric calculation.
 
 #ifndef MLTK_MAXENT_MAXENT_H_
 #define MLTK_MAXENT_MAXENT_H_
