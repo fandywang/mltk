@@ -115,12 +115,6 @@ void MaxEnt::AddInstance(const Instance& instance) {
                                    citer->second));
   }
 
-  // 已有 model, 增量训练
-  if (ref_model_ != NULL) {
-    Instance tmp_instance = instance;
-    me_instance.ref_prob_dist = ref_model_->Classify(&tmp_instance);
-  }
-
   me_instances_.push_back(me_instance);
 }
 
@@ -147,20 +141,6 @@ int32_t MaxEnt::Train() {
 
   if (num_classes_ != label_vocab_.Size()) {
     std::cerr << "warning: num_classes_ != label_vocab_.Size()" << std::endl;
-  }
-
-  if (ref_model_ != NULL) {
-    std::cerr << "setting reference distribution...";
-    for (int32_t i = 0; i < ref_model_->NumClasses(); ++i) {
-      label_vocab_.Put(ref_model_->GetClassLabel(i));
-    }
-    num_classes_ = label_vocab_.Size();
-    for (std::vector<MaxEntInstance>::iterator iter = me_instances_.begin();
-         iter != me_instances_.end();
-         ++iter) {
-      SetRefProbDist(&(*iter));
-    }
-    std::cerr << "done" << std::endl;
   }
 
   if (num_heldout_ >= static_cast<int32_t>(me_instances_.size())) {
@@ -261,11 +241,6 @@ std::vector<double> MaxEnt::Classify(Instance* instance) const {
     }
   }
 
-  if (ref_model_ != NULL) {
-    me_instance.ref_prob_dist = ref_model_->Classify(instance);
-    SetRefProbDist(&me_instance);
-  }
-
   std::vector<double> prob_dist(num_classes_);
   int32_t label = Classify(me_instance, &prob_dist);
   instance->set_label(GetClassLabel(label));
@@ -283,22 +258,6 @@ void MaxEnt::Clear() {
   model_expectation_.clear();
   me_instances_.clear();
   heldout_.clear();
-}
-
-void MaxEnt::SetRefProbDist(MaxEntInstance* me_instance) const {
-  const std::vector<double>& v0 = me_instance->ref_prob_dist;
-  std::vector<double> v(num_classes_);
-
-  for (size_t i = 0; i < v.size(); ++i) {
-    v[i] = 0;
-    std::string label = GetClassLabel(i);
-    int32_t id_ref = ref_model_->GetClassId(label);
-    if (id_ref != -1) {
-      v[i] = v0[id_ref];
-    }
-    if (v[i] == 0) { v[i] = 0.001; }  // to avoid -inf logl
-  }
-  me_instance->ref_prob_dist = v;
 }
 
 void MaxEnt::InitFeatureVocabulary(const int32_t cutoff) {
@@ -506,10 +465,8 @@ int32_t MaxEnt::CalcConditionalProbability(
   for (int32_t label = 0; label < num_classes_; ++label) {
     double pow_value = powv[label] - offset;
     double prod = exp(pow_value);  // exp(w * x)
-
-    // 存在一个先验的 model, 两个 model 融合
-    if (ref_model_ != NULL) { prod *= me_instance.ref_prob_dist[label]; }
     assert(prod != 0);
+
     (*prob_dist)[label] = prod;
     sum += prod;
   }

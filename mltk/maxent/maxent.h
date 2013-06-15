@@ -94,10 +94,9 @@
 //    1. supporting real-valued features.
 //    2. supporting many parameter estimation algorithms, including LBFGS,
 //       OWLQN and SGD.
-//    3. supporting incremental learning.
 //
 // TODO:
-//    1. add unittest.
+//    1. add more unittests.
 //    2. add apps, like [hierarchial] text classification and part-of-speech
 //       tagging (POS).
 //    3. supporting trainer and predictor tools.
@@ -127,8 +126,6 @@ typedef struct {
   int32_t label;  // class id
 
   std::vector<std::pair<int32_t, double> > features;  // vector of features
-
-  std::vector<double> ref_prob_dist;  // reference probability distribution
 } MaxEntInstance;
 
 class MaxEnt {
@@ -154,9 +151,6 @@ class MaxEnt {
     return label_vocab_.Id(label);
   }
 
-  // to support incremental learning.
-  void SetReferenceModel(const MaxEnt& ref_model) { ref_model_ = &ref_model; }
-
   // Training
   void AddInstance(const mltk::common::Instance& instance);
   int32_t Train();
@@ -177,10 +171,6 @@ class MaxEnt {
 
  private:
   void Clear();
-
-  // 为样本 me_instance 设置先验分布结果, 先验分布根据先验模型
-  // reference_distribution 预估得到.
-  void SetRefProbDist(MaxEntInstance* me_instance) const;
 
   // 特征选择: 过滤掉出现次数少于 cutoff 的特征.
   void InitFeatureVocabulary(const int32_t cutoff);
@@ -249,8 +239,6 @@ class MaxEnt {
   // all possible features f(x, y), format:
   // [featurename_id, [feature_id1, feature_id2, ...]]
   std::vector<std::vector<int> > all_me_features_;
-
-  const MaxEnt* ref_model_;  // reference model, supporting incremental learning
 
   // 特征函数 f(x, y) 关于经验分布 P1(X, Y) 的期望值, 用 E_p1 (f) 表示.
   //
