@@ -1,17 +1,17 @@
-// Copyright (c) 2013 MaxEnt Project.
+// Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
 //
 // STL DoubleVector Warapper and its utils.
 
-#ifndef MLTK_MAXENT_MATH_VECTOR_H_
-#define MLTK_MAXENT_MATH_VECTOR_H_
+#ifndef MLTK_COMMON_DOUBLE_VECTOR_H_
+#define MLTK_COMMON_DOUBLE_VECTOR_H_
 
 #include <assert.h>
 #include <iostream>
 #include <vector>
 
 namespace mltk {
-namespace maxent {
+namespace common {
 
 class DoubleVector {
  public:
@@ -105,7 +105,7 @@ inline const DoubleVector operator*(const double c, const DoubleVector& a) {
   return a * c;
 }
 
-}  // namespace maxent
+}  // namespace common
 }  // namespace mltk
 
-#endif  // MLTK_MAXENT_MATH_VECTOR_H_
+#endif  // MLTK_COMMON_DOUBLE_VECTOR_H_

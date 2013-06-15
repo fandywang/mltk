@@ -1,5 +1,6 @@
 // Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
+
 #include "mltk/maxent/maxent.h"
 
 #include <math.h>
@@ -7,10 +8,12 @@
 #include <iostream>
 #include <vector>
 
-#include "mltk/maxent/double_vector.h"
+#include "mltk/common/double_vector.h"
 
 namespace mltk {
 namespace maxent {
+
+using mltk::common::DoubleVector;
 
 const static int32_t M = 10;
 const static double LINE_SEARCH_ALPHA = 0.1;

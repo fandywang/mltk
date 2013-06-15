@@ -4,7 +4,7 @@ The Machine Learning Toolkit (MLTK) is an open source C++ library supporting res
 
 Copyright and license
 ---------------------
-Copyright (C) 2013 MLTK Project
+Copyright (C) 2013 MLTK Project.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this work except in compliance with the License.

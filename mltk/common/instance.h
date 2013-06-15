@@ -1,19 +1,19 @@
-// Copyright (c) 2013 MaxEnt Project.
+// Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
 //
 // The Instance class.
 
-#ifndef MLTK_MAXENT_INSTANCE_H_
-#define MLTK_MAXENT_INSTANCE_H_
+#ifndef MLTK_COMMON_INSTANCE_H_
+#define MLTK_COMMON_INSTANCE_H_
 
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace mltk {
-namespace maxent {
+namespace common {
 
-// data format for each instance for training/testing
+// data format of instance for training/testing
 class Instance {
  public:
   Instance() {}
@@ -37,8 +37,8 @@ class Instance {
                                                            // features
 };
 
-}  // namespace maxent
+}  // namespace common
 }  // namespace mltk
 
-#endif  // MLTK_MAXENT_INSTANCE_H_
+#endif  // MLTK_COMMON_INSTANCE_H_
 

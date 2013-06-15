@@ -7,13 +7,13 @@
 //
 // Features:
 //   1. supporting real-valued features.
-//   2. supporting parameter estimation algorithms, including LBFGS, OWLQN
+//   2. supporting many parameter estimation algorithms, including LBFGS, OWLQN
 //      and SGD.
 //   3. supporting incremental learning.
 //
 // TODO(fandywang):
 //   1. add unittest.
-//   2. add apps, like [hierarchial] text classifcation and part-of-speech
+//   2. add apps, like [hierarchial] text classification and part-of-speech
 //   tagging (POS).
 //   3. supporting metric calculation.
 //   4. supporting cross validation.
@@ -26,12 +26,17 @@
 #include <string>
 #include <vector>
 
-#include "mltk/maxent/double_vector.h"
-#include "mltk/maxent/feature.h"
-#include "mltk/maxent/instance.h"
-#include "mltk/maxent/vocabulary.h"
+#include "mltk/common/feature_vocabulary.h"
+#include "mltk/common/vocabulary.h"
 
 namespace mltk {
+
+namespace common {
+class DoubleVector;
+class Feature;
+class Instance;
+}  // namespace common
+
 namespace maxent {
 
 typedef struct {
@@ -60,26 +65,6 @@ class MaxEnt {
   // threshold: cut off low_weight features
   bool SaveModel(const std::string& filename, const double threshold = 0) const;
 
-  // to support incremental learning.
-  void SetReferenceModel(const MaxEnt& ref_model) { ref_model_ = &ref_model; }
-
-  void UseLBFGS() { optimization_method_ = LBFGS; }
-  void UseSGD() { optimization_method_ = SGD; }
-
-  void UseL1Regularizer(const double reg) { l1reg_ = reg; }
-  void UseL2Regularizer(const double reg) { l2reg_ = reg; }
-
-  void SetHeldout(const int32_t num_heldout) { num_heldout_ = num_heldout; }
-
-  // Training
-  void AddInstance(const Instance& instance);
-  int32_t Train();
-
-  int32_t Train(const std::vector<Instance>& instances);
-
-  // Classify
-  std::vector<double> Classify(Instance* instance) const;
-
   int32_t NumClasses() const { return num_classes_; }
 
   std::string GetClassLabel(int32_t id) const { return label_vocab_.Str(id); }
@@ -87,6 +72,27 @@ class MaxEnt {
   int32_t GetClassId(const std::string& label) const {
     return label_vocab_.Id(label);
   }
+
+  // to support incremental learning.
+  void SetReferenceModel(const MaxEnt& ref_model) { ref_model_ = &ref_model; }
+
+  // Training
+  void AddInstance(const mltk::common::Instance& instance);
+  int32_t Train();
+
+  int32_t Train(const std::vector<mltk::common::Instance>& instances);
+
+  void SetHeldout(const int32_t num_heldout) { num_heldout_ = num_heldout; }
+
+  void UseLBFGS() { optimization_method_ = LBFGS; }
+  void UseOWLQN() { optimization_method_ = OWLQN; }
+  void UseSGD() { optimization_method_ = SGD; }
+
+  void UseL1Regularizer(const double reg) { l1reg_ = reg; }
+  void UseL2Regularizer(const double reg) { l2reg_ = reg; }
+
+  // Classify
+  std::vector<double> Classify(mltk::common::Instance* instance) const;
 
  private:
   void Clear();
@@ -96,7 +102,7 @@ class MaxEnt {
   void SetRefProbDist(MaxEntInstance* me_instance) const;
 
   // 特征选择: 过滤掉出现次数少于 cutoff 的特征.
-  void InitFeatureVocabulary(const int cutoff);
+  void InitFeatureVocabulary(const int32_t cutoff);
 
   // 枚举所有可能的 feature, class_name * feature_name
   void InitAllMEFeatures();
@@ -113,27 +119,25 @@ class MaxEnt {
   double FunctionGradient(const std::vector<double>& x,
                           std::vector<double>& grad);
 
-  // 更新 E_p (f)
-  // E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
+  // update E_p (f), formula: E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
   double UpdateModelExpectation();
 
-  // 线性搜索
-  double BacktrackingLineSearch(const DoubleVector& x0,
-                                const DoubleVector& grad0,
+  double BacktrackingLineSearch(const mltk::common::DoubleVector& x0,
+                                const mltk::common::DoubleVector& grad0,
                                 const double f0,
-                                const DoubleVector& dx,
-                                DoubleVector& x,
-                                DoubleVector& grad1);
+                                const mltk::common::DoubleVector& dx,
+                                mltk::common::DoubleVector& x,
+                                mltk::common::DoubleVector& grad1);
   double RegularizedFuncGrad(const double C,
-                             const DoubleVector& x,
-                             DoubleVector& grad);
+                             const mltk::common::DoubleVector& x,
+                             mltk::common::DoubleVector& grad);
   double ConstrainedLineSearch(double C,
-                               const DoubleVector& x0,
-                               const DoubleVector& grad0,
+                               const mltk::common::DoubleVector& x0,
+                               const mltk::common::DoubleVector& grad0,
                                const double f0,
-                               const DoubleVector& dx,
-                               DoubleVector& x,
-                               DoubleVector& grad1);
+                               const mltk::common::DoubleVector& dx,
+                               mltk::common::DoubleVector& x,
+                               mltk::common::DoubleVector& grad1);
 
   // 预估输入样本 me_instance 的类别分布.
   int32_t Classify(const MaxEntInstance& me_instance,
@@ -146,28 +150,26 @@ class MaxEnt {
   double CalcHeldoutLikelihood();
 
  private:
-  int32_t num_classes_;
+  int32_t num_classes_;  // number of classes
 
-  // training data
-  std::vector<MaxEntInstance> me_instances_;
+  std::vector<MaxEntInstance> me_instances_;  // training data
+  double train_error_;  // current error rate on the training data
 
-  // heldout data
   int32_t num_heldout_;
-  std::vector<MaxEntInstance> heldout_;
+  std::vector<MaxEntInstance> heldout_;  // heldout data
+  double heldout_error_;  // current error rate on the heldout data
 
-  Vocabulary featurename_vocab_;  // x:feature_name <--> id
+  mltk::common::Vocabulary featurename_vocab_;  // featurename mapping, {x : id}
+  mltk::common::Vocabulary label_vocab_;  // labelname mapping, {y : id}
+  mltk::common::FeatureVocabulary feature_vocab_;  // vocabulary of features, f(x, y)
 
-  Vocabulary label_vocab_;  // y:class label <--> id
-
-  FeatureVocabulary feature_vocab_;  // f(x, y)
-
-  std::vector<double> lambdas_;  // vector of lambda, 即 f(x, y) 对应的 weight
+  std::vector<double> lambdas_;  // vector of lambda, weight for feature f(x, y)
 
   // all possible features f(x, y), format:
   // [featurename_id, [feature_id1, feature_id2, ...]]
   std::vector<std::vector<int> > all_me_features_;
 
-  const MaxEnt* ref_model_;  // reference model
+  const MaxEnt* ref_model_;  // reference model, supporting incremental learning
 
   // 特征函数 f(x, y) 关于经验分布 P1(X, Y) 的期望值, 用 E_p1 (f) 表示.
   //
@@ -181,13 +183,8 @@ class MaxEnt {
 
   // Note: OWLQN and SGD are available only for L1-regularization
   enum OPTIMIZATION_METHOD { LBFGS, OWLQN, SGD } optimization_method_;
-
-  // 正则化因子
-  double l1reg_;
-  double l2reg_;
-
-  double train_error_;  // current error rate on the training data
-  double heldout_error_;  // current error rate on the heldout data
+  double l1reg_;  // L1-regularization
+  double l2reg_;  // L2-regularization
 };
 
 }  // namespace maxent

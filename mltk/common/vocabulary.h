@@ -3,9 +3,10 @@
 //
 // The Vocabulary class.
 
-#ifndef MLTK_MAXENT_VOCABULARY_H_
-#define MLTK_MAXENT_VOCABULARY_H_
+#ifndef MLTK_COMMON_VOCABULARY_H_
+#define MLTK_COMMON_VOCABULARY_H_
 
+#include <assert.h>
 #include <stdint.h>
 
 #include <map>
@@ -13,7 +14,7 @@
 #include <vector>
 
 namespace mltk {
-namespace maxent {
+namespace common {
 
 typedef std::map<std::string, int32_t> StringMapType;
 
@@ -60,8 +61,8 @@ class Vocabulary {
   std::vector<std::string> id2str_;
 };
 
-}  // namespace maxent
+}  // namespace common
 }  // namespace mltk
 
-#endif  // MLTK_MAXENT_VOCABULARY_H_
+#endif  // MLTK_COMMON_VOCABULARY_H_
 

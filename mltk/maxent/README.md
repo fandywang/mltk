@@ -1,7 +1,6 @@
 MLTK.MaxEnt
 ==========================
-
-Maximum Entropy Modeling.
+Maximum Entropy Modelling.
 
 References
 ---------------------
@@ -9,11 +8,11 @@ References
 2. Adam L. Berger, Stephen A. Della Pietra, and Vincent J. Della Pietra. 1996.
 [A maximum entropy approach to natural language processing](http://acl.ldc.upenn.edu/J/J96/J96-1002.pdf).
 Computational Linguistics.
-3. Andrew . andJianfeng Gao. 2007. [Scalable Training of L1-Regularized Log-Linear Models](http://www.machinelearning.org/proceedings/icml2007/papers/449.pdf). ICML.
+3. Galen Andrew, Jianfeng Gao. 2007. [Scalable Training of L1-Regularized Log-Linear Models](http://www.machinelearning.org/proceedings/icml2007/papers/449.pdf). ICML.
 
 Copyright and license
 ---------------------
-Copyright (C) 2013 MLTK Project
+Copyright (C) 2013 MLTK Project.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this work except in compliance with the License.

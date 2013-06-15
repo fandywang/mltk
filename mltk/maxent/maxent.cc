@@ -12,8 +12,17 @@
 #include <utility>
 #include <vector>
 
+#include "mltk/common/double_vector.h"
+#include "mltk/common/feature_vocabulary.h"
+#include "mltk/common/feature.h"
+#include "mltk/common/instance.h"
+#include "mltk/common/vocabulary.h"
+
 namespace mltk {
 namespace maxent {
+
+using mltk::common::Feature;
+using mltk::common::Instance;
 
 bool MaxEnt::LoadModel(const std::string& filename) {
   Clear();
@@ -57,7 +66,7 @@ bool MaxEnt::SaveModel(const std::string& filename,
     return false;
   }
 
-  for (StringMapType::const_iterator iter = featurename_vocab_.begin();
+  for (common::StringMapType::const_iterator iter = featurename_vocab_.begin();
        iter != featurename_vocab_.end();
        ++iter) {
     for (int32_t label_id = 0; label_id < label_vocab_.Size(); ++label_id) {
