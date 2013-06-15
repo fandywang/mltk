@@ -107,7 +107,7 @@ std::vector<double> MaxEnt::PerformOWLQN(const std::vector<double>& x0,
 double MaxEnt::RegularizedFuncGrad(const double C,
                                    const DoubleVector& x,
                                    DoubleVector& grad) {
-  double f = FunctionGradient(x.STLVector(), grad.STLVector());
+  double f = FunctionGradient(x.STLVector(), &(grad.STLVector()));
   for (size_t i = 0; i < x.Size(); i++) {
     f += C * fabs(x[i]);
   }

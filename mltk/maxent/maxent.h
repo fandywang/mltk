@@ -109,25 +109,25 @@ class MaxEnt {
 
   // 参数估计: 拟牛顿法
   int32_t PerformQuasiNewton();
-  // 参数估计: 梯度下降法
+  // 参数估计: 随机梯度下降法
   int32_t PerformSGD();
 
-  std::vector<double> PerformLBFGS(const std::vector<double>& x0);
-  std::vector<double> PerformOWLQN(const std::vector<double>& x0,
-                                   const double C);
-
   double FunctionGradient(const std::vector<double>& x,
-                          std::vector<double>& grad);
+                          std::vector<double>* grad);
 
-  // update E_p (f), formula: E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
-  double UpdateModelExpectation();
-
+  std::vector<double> PerformLBFGS(const std::vector<double>& x0);
   double BacktrackingLineSearch(const mltk::common::DoubleVector& x0,
                                 const mltk::common::DoubleVector& grad0,
                                 const double f0,
                                 const mltk::common::DoubleVector& dx,
-                                mltk::common::DoubleVector& x,
-                                mltk::common::DoubleVector& grad1);
+                                mltk::common::DoubleVector* x,
+                                mltk::common::DoubleVector* grad1);
+
+  // update E_p (f), formula: E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
+  double UpdateModelExpectation();
+
+  std::vector<double> PerformOWLQN(const std::vector<double>& x0,
+                                   double C);
   double RegularizedFuncGrad(const double C,
                              const mltk::common::DoubleVector& x,
                              mltk::common::DoubleVector& grad);

@@ -1,4 +1,4 @@
-// Copyright (c) 2013 MLTK project.
+// Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
 
 #include "mltk/maxent/maxent.h"
@@ -378,7 +378,7 @@ int32_t MaxEnt::PerformQuasiNewton() {
 }
 
 double MaxEnt::FunctionGradient(const std::vector<double>& x,
-                                std::vector<double>& grad) {
+                                std::vector<double>* grad) {
   assert(static_cast<size_t>(feature_vocab_.Size()) == x.size());
 
   for (size_t i = 0; i < x.size(); ++i) { lambdas_[i] = x[i]; }
@@ -388,13 +388,13 @@ double MaxEnt::FunctionGradient(const std::vector<double>& x,
   // update gradient
   if (l2reg_ == 0) {
     for (size_t i = 0; i < x.size(); ++i) {
-      grad[i] = -(empirical_expectation_[i] - model_expectation_[i]);
+      (*grad)[i] = -(empirical_expectation_[i] - model_expectation_[i]);
     }
   } else {
     const double c = l2reg_ * 2;
     for (size_t i = 0; i < x.size(); ++i) {
-      grad[i] = -(empirical_expectation_[i] - model_expectation_[i]
-                  - c * lambdas_[i]);
+      (*grad)[i] = -(empirical_expectation_[i] - model_expectation_[i]
+                    - c * lambdas_[i]);
     }
   }
 

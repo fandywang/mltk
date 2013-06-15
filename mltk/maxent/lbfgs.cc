@@ -45,7 +45,7 @@ DoubleVector ApproximateHg(const int32_t iter,
   DoubleVector q = grad;
   double alpha[M], beta[M];
   for (int32_t i = bound - 1; i >= 0; --i) {
-    const int j = (i + offset) % M;
+    const int32_t j = (i + offset) % M;
     alpha[i] = z[j] * DotProduct(s[j], q);
     q += -alpha[i] * y[j];
   }
@@ -55,7 +55,7 @@ DoubleVector ApproximateHg(const int32_t iter,
     q *= gamma;
   }
   for (int32_t i = 0; i <= bound - 1; ++i) {
-    const int j = (i + offset) % M;
+    const int32_t j = (i + offset) % M;
     beta[i] = z[j] * DotProduct(y[j], q);
     q += s[j] * (alpha[i] - beta[i]);
   }
@@ -68,7 +68,7 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
   DoubleVector x(x0);
 
   DoubleVector grad(dim), dx(dim);
-  double f = FunctionGradient(x.STLVector(), grad.STLVector());
+  double f = FunctionGradient(x.STLVector(), &(grad.STLVector()));
 
   DoubleVector s[M];
   DoubleVector y[M];
@@ -78,18 +78,18 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
     fprintf(stderr, "%3d  obj(err) = %f (%6.4f)", iter + 1, -f, train_error_);
     if (num_heldout_ > 0) {
       const double heldout_logl = CalcHeldoutLikelihood();
-      fprintf(stderr, "  heldout_logl(err) = %f (%6.4f)",
+      fprintf(stderr, "\theldout_logl(err) = %f (%6.4f)",
               heldout_logl, heldout_error_);
     }
     fprintf(stderr, "\n");
 
     // 终止条件 2
-    if (sqrt(DotProduct(grad, grad)) < MIN_GRAD_NORM) break;
+    if (sqrt(DotProduct(grad, grad)) < MIN_GRAD_NORM) { break; }
 
     dx = -1 * ApproximateHg(iter, grad, s, y, z);
 
     DoubleVector x1(dim), grad1(dim);
-    f = BacktrackingLineSearch(x, grad, f, dx, x1, grad1);
+    f = BacktrackingLineSearch(x, grad, f, dx, &x1, &grad1);
 
     s[iter % M] = x1 - x;
     y[iter % M] = grad1 - grad;
@@ -105,15 +105,15 @@ double MaxEnt::BacktrackingLineSearch(const DoubleVector& x0,
                                       const DoubleVector& grad0,
                                       const double f0,
                                       const DoubleVector& dx,
-                                      DoubleVector& x,
-                                      DoubleVector& grad1) {
+                                      DoubleVector* x,
+                                      DoubleVector* grad1) {
   double t = 1.0 / LINE_SEARCH_BETA;
   double f;
 
   do {
     t *= LINE_SEARCH_BETA;
-    x = x0 + t * dx;
-    f = FunctionGradient(x.STLVector(), grad1.STLVector());
+    *x = x0 + t * dx;
+    f = FunctionGradient(x->STLVector(), &(grad1->STLVector()));
   } while (f > f0 + LINE_SEARCH_ALPHA * t * DotProduct(dx, grad0));
 
   return f;

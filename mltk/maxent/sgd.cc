@@ -15,7 +15,7 @@ const double SGD_ETA0 = 1;
 const double SGD_ITER = 30;
 const double SGD_ALPHA = 0.85;
 
-inline void ApplyL1Penalty(const int i,
+inline void ApplyL1Penalty(const int32_t i,
                            const double u,
                            std::vector<double>& lambas,
                            std::vector<double>& q) {
@@ -54,7 +54,6 @@ int32_t MaxEnt::PerformSGD() {
   int32_t iter_sample = 0;
   const double eta0 = SGD_ETA0;
 
-  //  cerr << "l1param = " << l1param << endl;
   std::cerr << "eta0 = " << eta0 << " alpha = " << SGD_ALPHA << std::endl;
 
   double u = 0;
@@ -64,26 +63,25 @@ int32_t MaxEnt::PerformSGD() {
   sum_eta.push_back(0);
 
   for (int32_t iter = 0; iter < SGD_ITER; ++iter) {
-    random_shuffle(ri.begin(), ri.end());
-
     double logl = 0;
-    int32_t ncorrect = 0, ntotal = 0;
+    int32_t ncorrect = 0;
+    int32_t ntotal = 0;
+
+    random_shuffle(ri.begin(), ri.end());
     for (size_t i = 0; i < me_instances_.size(); ++i, ++ntotal, ++iter_sample) {
       const MaxEntInstance& me_instance = me_instances_[ri[i]];
 
-      std::vector<double> membp(num_classes_);
-      const int32_t max_label = CalcConditionalProbability(me_instance, &membp);
+      std::vector<double> prob_dist(num_classes_);
+      const int32_t max_label = CalcConditionalProbability(me_instance,
+                                                           &prob_dist);
 
-      const double eta = eta0 * pow(SGD_ALPHA,
-                                    (double)iter_sample / me_instances_.size()); // exponential decay
-      //      const double eta = eta0 / (1.0 + (double)iter_sample / me_instances_.size());
-
-      //      if (iter_sample % me_instances_.size() == 0) cerr << "eta = " << eta << endl;
+      const double eta = eta0 *
+          pow(SGD_ALPHA, static_cast<double>(iter_sample) / me_instances_.size()); // exponential decay
       u += eta * l1param;
 
       sum_eta.push_back(sum_eta.back() + eta * l1param);
 
-      logl += log(membp[me_instance.label]);
+      logl += log(prob_dist[me_instance.label]);
       if (max_label == me_instance.label) { ++ncorrect; }
 
       // real-valued features
@@ -93,7 +91,7 @@ int32_t MaxEnt::PerformSGD() {
         for (std::vector<int32_t>::const_iterator k
              = all_me_features_[j->first].begin();
              k != all_me_features_[j->first].end(); ++k) {
-          const double me = membp[feature_vocab_.GetFeature(*k).LabelId()];
+          const double me = prob_dist[feature_vocab_.GetFeature(*k).LabelId()];
           const double ee = (feature_vocab_.GetFeature(*k).LabelId()
                              == me_instance.label ? 1.0 : 0);
           const double grad = (me - ee) * j->second;
@@ -104,26 +102,20 @@ int32_t MaxEnt::PerformSGD() {
       }
     }
     logl /= me_instances_.size();
-    //    fprintf(stderr, "%4d logl = %8.3f acc = %6.4f ", iter, logl, (double)ncorrect / ntotal);
 
     double f = logl;
     if (l1param > 0) {
       const double l1 = L1Norm(lambdas_); // this is not accurate when lazy update is used
-      //      cerr << "f0 = " <<  update_model_expectation() - l1param * l1 << " ";
       f -= l1param * l1;
-      int nonzero = 0;
+      int32_t nonzero = 0;
       for (int32_t j = 0; j < d; ++j) if (lambdas_[j] != 0) ++nonzero;
-      //      cerr << " f = " << f << " l1 = " << l1 << " nonzero_features = " << nonzero << endl;
     }
-    //    fprintf(stderr, "%4d  obj = %7.3f acc = %6.4f", iter+1, f, (double)ncorrect/ntotal);
-    //    fprintf(stderr, "%4d  obj = %f", iter+1, f);
+
     fprintf(stderr, "%3d  obj(err) = %f (%6.4f)",
             iter + 1, f, 1 - static_cast<double>(ncorrect) / ntotal);
-
     if (num_heldout_ > 0) {
       double heldout_logl = CalcHeldoutLikelihood();
-      //      fprintf(stderr, "  heldout_logl = %f  acc = %6.4f\n", heldout_logl, 1 - _heldout_error);
-      fprintf(stderr, "  heldout_logl(err) = %f (%6.4f)",
+      fprintf(stderr, "\theldout_logl(err) = %f (%6.4f)",
               heldout_logl, heldout_error_);
     }
     fprintf(stderr, "\n");
