@@ -20,12 +20,12 @@ const static double LINE_SEARCH_ALPHA = 0.1;
 const static double LINE_SEARCH_BETA = 0.5;
 
 // stopping criteria
-int32_t OWLQN_MAX_ITER = 300;
+const static int32_t OWLQN_MAX_ITER = 300;
 const static double MIN_GRAD_NORM = 0.0001;
 
 inline int32_t Sign(double x) {
-  if (x > 0) return 1;
-  if (x < 0) return -1;
+  if (x > 0) { return 1; }
+  if (x < 0) { return -1; }
   return 0;
 };
 
@@ -72,23 +72,22 @@ std::vector<double> MaxEnt::PerformOWLQN(const std::vector<double>& x0,
   DoubleVector y[M];
   double z[M];  // rho
 
-  for (int32_t iter = 0; iter < OWLQN_MAX_ITER; ++iter) {  // 终止条件 1
+  for (int32_t iter = 0; iter < OWLQN_MAX_ITER; ++iter) {  // stopping criteria 1
     DoubleVector pg = PseudoGradient(x, grad, C);
 
-    fprintf(stderr, "%3d  obj(err) = %f (%6.4f)", iter + 1, -f, train_error_);
+    fprintf(stderr, "%3d\tobj(err) = %f (%6.4f)", iter + 1, -f, train_error_);
     if (num_heldout_ > 0) {
       const double heldout_logl = CalcHeldoutLikelihood();
-      fprintf(stderr, "  heldout_logl(err) = %f (%6.4f)",
+      fprintf(stderr, "\theldout_logl(err) = %f (%6.4f)",
               heldout_logl, heldout_error_);
     }
     fprintf(stderr, "\n");
 
-    // 终止条件 2
-    if (sqrt(DotProduct(pg, pg)) < MIN_GRAD_NORM) break;
+    // stopping criteria 2
+    if (sqrt(DotProduct(pg, pg)) < MIN_GRAD_NORM) { break; }
 
     dx = -1 * ApproximateHg(iter, pg, s, y, z);
-    if (DotProduct(dx, pg) >= 0)
-      dx.Project(-1 * pg);
+    if (DotProduct(dx, pg) >= 0) { dx.Project(-1 * pg); }
 
     DoubleVector x1(dim), grad1(dim);
     f = ConstrainedLineSearch(C, x, pg, f, dx, x1, grad1);

@@ -20,7 +20,7 @@ const static double LINE_SEARCH_ALPHA = 0.1;
 const static double LINE_SEARCH_BETA = 0.5;
 
 // stopping criteria
-int32_t LBFGS_MAX_ITER = 300;
+const static int32_t LBFGS_MAX_ITER = 300;
 const static double MIN_GRAD_NORM = 0.0001;
 
 //
@@ -74,8 +74,8 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
   DoubleVector y[M];
   double z[M];  // rho
 
-  for (int32_t iter = 0; iter < LBFGS_MAX_ITER; ++iter) {  // 终止条件 1
-    fprintf(stderr, "%3d  obj(err) = %f (%6.4f)", iter + 1, -f, train_error_);
+  for (int32_t iter = 0; iter < LBFGS_MAX_ITER; ++iter) {  // stopping criteria 1
+    fprintf(stderr, "%3d\tobj(err) = %f (%6.4f)", iter + 1, -f, train_error_);
     if (num_heldout_ > 0) {
       const double heldout_logl = CalcHeldoutLikelihood();
       fprintf(stderr, "\theldout_logl(err) = %f (%6.4f)",
@@ -83,7 +83,7 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
     }
     fprintf(stderr, "\n");
 
-    // 终止条件 2
+    // stopping criteria 2
     if (sqrt(DotProduct(grad, grad)) < MIN_GRAD_NORM) { break; }
 
     dx = -1 * ApproximateHg(iter, grad, s, y, z);

@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   if (FLAGS_l2_reg > 0.0) {
     maxent.UseL2Reg(FLAGS_l2_reg);
   }
-  maxent.SetHeldout(FLAGS_num_heldout);
+  maxent.SetNumHeldout(FLAGS_num_heldout);
   maxent.SetFeatureFreqThreshold(FLAGS_feature_freq_threshold);
 
   LOG(INFO) << "Load training data from " << FLAGS_train_data_file;

@@ -17,9 +17,12 @@
 //         p^\star = argmax_{p \in C} H(p)
 //
 //    Where H(p) = - \sum_{x,y} {p1(x) * p(y|x) log p(y|x)}
-//          C = {p \in P | E_p(f_i) = E_p1(f_i), i = 1,2,...,n}
+//          C = {p \in P | E_p(f_i) = E_p1(f_i), i = 1,2,...,n}, constraint.
 //          p1(f) = \sum_{x,y} {p1(x,y) * f(x,y)}
 //          p(f) = \sum_{x,y} {p1(x) * p(y|x) * f(x,y)}, f is a feature function
+//
+//    Obviously, the maximum entropy principle presents us with a problem in
+//    constrained optimization.
 //
 // Maximum Likelihood:
 //
@@ -56,7 +59,8 @@
 //    For all but the most simple problems, the \lambda^\star that maximize
 //    L_p1(p) cannot be found analytically. Instead, we must resort to mumerical
 //    methods, like IIS, GIS, GD, SGD, Newton's Methods, Quasi-Newton Methods,
-//    etc. MaxEnt implements three fast algorithms, LBFGS, OWLQN and SGD.
+//    etc. So far, MaxEnt implements three fast and effective algorithms,
+//    LBFGS, OWLQN and SGD.
 //
 //    Refer to:
 //      Jorge Nocedal. 1980. Updating Quasi-Newton Matrices with Limited
@@ -92,8 +96,8 @@
 //
 // Features:
 //    1. supporting real-valued features.
-//    2. supporting many parameter estimation algorithms, including LBFGS,
-//       OWLQN and SGD.
+//    2. supporting three fast and effective parameter estimation algorithms,
+//       including LBFGS, OWLQN and SGD.
 //
 // TODO:
 //    1. add more unittests.
@@ -129,8 +133,8 @@ typedef struct {
 
 class MaxEnt {
  public:
-  MaxEnt() : feature_freq_threshold_(0), optimization_method_(LBFGS),
-     l1reg_(0), l2reg_(0) {}
+  MaxEnt() : num_heldout_(0), feature_freq_threshold_(0),
+     optimization_method_(LBFGS), l1reg_(0), l2reg_(0) {}
   ~MaxEnt() { Clear(); }
 
   // Load model from file.
@@ -141,7 +145,7 @@ class MaxEnt {
   // Save model to file.
   bool SaveModel(const std::string& filename) const;
 
-  int32_t NumClasses() const { return num_classes_; }
+  int32_t NumClasses() const { return label_vocab_.Size(); }
 
   std::string GetClassLabel(int32_t id) const { return label_vocab_.Str(id); }
 
@@ -151,11 +155,11 @@ class MaxEnt {
 
   // Training
   void AddInstance(const mltk::common::Instance& instance);
-  int32_t Train();
+  bool Train();
 
-  int32_t Train(const std::vector<mltk::common::Instance>& instances);
+  bool Train(const std::vector<mltk::common::Instance>& instances);
 
-  void SetHeldout(const int32_t num_heldout) { num_heldout_ = num_heldout; }
+  void SetNumHeldout(const int32_t num_heldout) { num_heldout_ = num_heldout; }
 
   void SetFeatureFreqThreshold(const int32_t freq_threshold) {
       feature_freq_threshold_ = freq_threshold;
@@ -221,8 +225,6 @@ class MaxEnt {
   double CalcHeldoutLikelihood();
 
  private:
-  int32_t num_classes_;  // number of classes
-
   std::vector<MaxEntInstance> me_instances_;  // training data
   double train_error_;  // current error rate on the training data
 

@@ -51,8 +51,6 @@ bool MaxEnt::LoadModel(const std::string& filename) {
   }
   fclose(fp);
 
-  num_classes_ = label_vocab_.Size();
-
   InitAllMEFeatures();
 
   return true;
@@ -83,7 +81,7 @@ bool MaxEnt::SaveModel(const std::string& filename) const {
   return true;
 }
 
-int32_t MaxEnt::Train(const std::vector<Instance>& instances) {
+bool MaxEnt::Train(const std::vector<Instance>& instances) {
   me_instances_.clear();
   for (std::vector<Instance>::const_iterator citer = instances.begin();
        citer != instances.end(); ++citer) {
@@ -115,35 +113,22 @@ void MaxEnt::AddInstance(const Instance& instance) {
   }
 }
 
-int32_t MaxEnt::Train() {
+bool MaxEnt::Train() {
   if (l1reg_ > 0 && l2reg_ > 0) {
     std::cerr << "error: L1 and L2 regularizers cannot be used simultaneously."
          << std::endl;
-    return 0;
+    return false;
   }
 
   if (me_instances_.size() == 0) {
     std::cerr << "error: no training data." << std::endl;
-    return 0;
-  }
-
-  int32_t max_label = 0;
-  for (std::vector<MaxEntInstance>::const_iterator citer
-       = me_instances_.begin();
-       citer != me_instances_.end();
-       ++citer) {
-    max_label = std::max(max_label, citer->label);
-  }
-  num_classes_ = max_label + 1;
-
-  if (num_classes_ != label_vocab_.Size()) {
-    std::cerr << "warning: num_classes_ != label_vocab_.Size()" << std::endl;
+    return false;
   }
 
   if (num_heldout_ >= static_cast<int32_t>(me_instances_.size())) {
     std::cerr << "error: too much heldout data. no training data is available."
         << std::endl;
-    return 0;
+    return false;
   }
   for (int32_t i = 0; i < num_heldout_; ++i) {
     heldout_.push_back(me_instances_.back());
@@ -151,8 +136,8 @@ int32_t MaxEnt::Train() {
   }
 
   if (feature_freq_threshold_ > 0) {
-    std::cerr << "feature frequency threshold = " << feature_freq_threshold_
-        << std::endl;
+    std::cerr << "the threshold of feature frequency = "
+      << feature_freq_threshold_ << std::endl;
   }
 
   if (l1reg_ > 0) { std::cerr << "L1 regularizer = " << l1reg_ << std::endl; }
@@ -167,10 +152,11 @@ int32_t MaxEnt::Train() {
   InitAllMEFeatures();
   std::cerr << "done" << std::endl;
 
-  std::cerr << "number of samples = " << me_instances_.size() << std::endl;
+  std::cerr << "number of classes = " << label_vocab_.Size() << std::endl;
+  std::cerr << "number of instances = " << me_instances_.size() << std::endl;
   std::cerr << "number of features = " << feature_vocab_.Size() << std::endl;
 
-  // 计算 E_p1 (f), p1(x, y) = count(x, y) / N
+  // calc E_p1 (f), p1(x, y) = count(x, y) / N
   std::cerr << "calculating empirical expectation...";
   empirical_expectation_.resize(feature_vocab_.Size());
   for (int32_t i = 0; i < feature_vocab_.Size(); ++i) {
@@ -198,27 +184,25 @@ int32_t MaxEnt::Train() {
   }
   std::cerr << "done" << std::endl;
 
-  // 初始化模型
+  // initialize model
   lambdas_.resize(feature_vocab_.Size());
-  for (int32_t i = 0; i < feature_vocab_.Size(); ++i) {
-    lambdas_[i] = 0.0;
-  }
+  for (int32_t i = 0; i < feature_vocab_.Size(); ++i) { lambdas_[i] = 0.0; }
 
-  // 参数估计: 最优化方法
+  // parameter estimation
   if (optimization_method_ == SGD) {
     PerformSGD();
   } else {
     PerformQuasiNewton();
   }
 
-  // 有效特征数统计
+  // count the number of active features
   int32_t num_active = 0;
   for (int32_t i = 0; i < feature_vocab_.Size(); ++i) {
     if (lambdas_[i] != 0) { ++num_active; }
   }
   std::cerr << "number of active features = " << num_active << std::endl;
 
-  return 0;
+  return true;
 }
 
 std::vector<double> MaxEnt::Classify(Instance* instance) const {
@@ -230,13 +214,13 @@ std::vector<double> MaxEnt::Classify(Instance* instance) const {
        citer != features.end();
        ++citer) {
     int32_t id = featurename_vocab_.Id(citer->first);
-    if (id >= 0) {
+    if (id >= 0) {  // only using the feature exists in training data
       me_instance.features.push_back(
           std::pair<int32_t, double>(id, citer->second));
     }
   }
 
-  std::vector<double> prob_dist(num_classes_);
+  std::vector<double> prob_dist(label_vocab_.Size());
   int32_t label = Classify(me_instance, &prob_dist);
   instance->set_label(GetClassLabel(label));
 
@@ -283,7 +267,8 @@ void MaxEnt::InitFeatureVocabulary() {
          citer2 != citer1->features.end();
          ++citer2) {
       const Feature feature(citer1->label, citer2->first);
-      if (feature_count[feature.Body()] <= feature_freq_threshold_) {
+      if (feature_freq_threshold_ > 0
+          && feature_count[feature.Body()] <= feature_freq_threshold_) {
         continue;
       }
       feature_vocab_.Put(feature);
@@ -299,7 +284,7 @@ void MaxEnt::InitAllMEFeatures() {
     all_me_features_.push_back(std::vector<int32_t>());
     std::vector<int32_t>& vi = all_me_features_.back();
 
-    for (int32_t c = 0; c < num_classes_; ++c) {
+    for (int32_t c = 0; c < label_vocab_.Size(); ++c) {
       int32_t id = feature_vocab_.FeatureId(Feature(c, f));
       if (id >= 0) {
         vi.push_back(id);
@@ -368,7 +353,7 @@ double MaxEnt::UpdateModelExpectation() {
        = me_instances_.begin();
        citer != me_instances_.end();
        ++citer) {
-    std::vector<double> prob_dist(num_classes_);
+    std::vector<double> prob_dist(label_vocab_.Size());
     int32_t max_label = CalcConditionalProbability(*citer, &prob_dist);
 
     logl += log(prob_dist[citer->label]);
@@ -407,7 +392,7 @@ double MaxEnt::CalcHeldoutLikelihood() {
   for (std::vector<MaxEntInstance>::const_iterator citer = heldout_.begin();
        citer != heldout_.end();
        ++citer) {
-    std::vector<double> prob_dist(num_classes_);
+    std::vector<double> prob_dist(label_vocab_.Size());
     int32_t label = Classify(*citer, &prob_dist);
     logl += log(prob_dist[citer->label]);
     if (label == citer->label) { ++ncorrect; }
@@ -421,7 +406,7 @@ double MaxEnt::CalcHeldoutLikelihood() {
 // p(y | x)
 int32_t MaxEnt::Classify(const MaxEntInstance& me_instance,
                          std::vector<double>* prob_dist) const {
-  assert(num_classes_ == static_cast<int32_t>(prob_dist->size()));
+  assert(label_vocab_.Size() == static_cast<int32_t>(prob_dist->size()));
 
   CalcConditionalProbability(me_instance, prob_dist);
 
@@ -439,7 +424,7 @@ int32_t MaxEnt::Classify(const MaxEntInstance& me_instance,
 
 int32_t MaxEnt::CalcConditionalProbability(
     const MaxEntInstance& me_instance, std::vector<double>* prob_dist) const {
-  std::vector<double> powv(num_classes_, 0.0);
+  std::vector<double> powv(label_vocab_.Size(), 0.0);
 
   for (std::vector<std::pair<int32_t, double> >::const_iterator citer
        = me_instance.features.begin();
@@ -458,7 +443,7 @@ int32_t MaxEnt::CalcConditionalProbability(
       = max_element(powv.begin(), powv.end());
   double sum = 0.0;
   double offset = std::max(0.0, *pmax - 700);  // to avoid overflow
-  for (int32_t label = 0; label < num_classes_; ++label) {
+  for (int32_t label = 0; label < label_vocab_.Size(); ++label) {
     double pow_value = powv[label] - offset;
     double prod = exp(pow_value);  // exp(w * x)
     assert(prod != 0);
@@ -469,7 +454,7 @@ int32_t MaxEnt::CalcConditionalProbability(
 
   int32_t max_label = 0;
   if (sum > 0.0) {
-    for (int32_t label = 0; label < num_classes_; ++label) {
+    for (int32_t label = 0; label < label_vocab_.Size(); ++label) {
       (*prob_dist)[label] /= sum;
       if ((*prob_dist)[label] > (*prob_dist)[max_label]) { max_label = label; }
     }

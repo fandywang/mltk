@@ -11,9 +11,9 @@
 namespace mltk {
 namespace maxent {
 
-const double SGD_ETA0 = 1;
-const double SGD_ITER = 30;
-const double SGD_ALPHA = 0.85;
+const static double SGD_ETA0 = 1;
+const static double SGD_ITER = 30;
+const static double SGD_ALPHA = 0.85;
 
 inline void ApplyL1Penalty(const int32_t i,
                            const double u,
@@ -71,12 +71,13 @@ int32_t MaxEnt::PerformSGD() {
     for (size_t i = 0; i < me_instances_.size(); ++i, ++ntotal, ++iter_sample) {
       const MaxEntInstance& me_instance = me_instances_[ri[i]];
 
-      std::vector<double> prob_dist(num_classes_);
+      std::vector<double> prob_dist(NumClasses());
       const int32_t max_label = CalcConditionalProbability(me_instance,
                                                            &prob_dist);
 
       const double eta = eta0 *
-          pow(SGD_ALPHA, static_cast<double>(iter_sample) / me_instances_.size()); // exponential decay
+          pow(SGD_ALPHA,
+              static_cast<double>(iter_sample) / me_instances_.size()); // exponential decay
       u += eta * l1param;
 
       sum_eta.push_back(sum_eta.back() + eta * l1param);
@@ -111,7 +112,7 @@ int32_t MaxEnt::PerformSGD() {
       for (int32_t j = 0; j < d; ++j) if (lambdas_[j] != 0) ++nonzero;
     }
 
-    fprintf(stderr, "%3d  obj(err) = %f (%6.4f)",
+    fprintf(stderr, "%3d\tobj(err) = %f (%6.4f)",
             iter + 1, f, 1 - static_cast<double>(ncorrect) / ntotal);
     if (num_heldout_ > 0) {
       double heldout_logl = CalcHeldoutLikelihood();
