@@ -100,8 +100,7 @@
 //       including LBFGS, OWLQN and SGD.
 //
 // TODO:
-//    1. add more unittests.
-//    2. add apps, like [hierarchial] text classification and part-of-speech
+//    1. add apps, like [hierarchial] text classification and part-of-speech
 //       tagging (POS).
 
 #ifndef MLTK_MAXENT_MAXENT_H_
