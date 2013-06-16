@@ -163,8 +163,8 @@ class MaxEnt {
   void UseOWLQN() { optimization_method_ = OWLQN; }
   void UseSGD() { optimization_method_ = SGD; }
 
-  void UseL1Regularizer(const double reg) { l1reg_ = reg; }
-  void UseL2Regularizer(const double reg) { l2reg_ = reg; }
+  void UseL1Reg(const double reg) { l1reg_ = reg; }
+  void UseL2Reg(const double reg) { l2reg_ = reg; }
 
   // Classify
   std::vector<double> Classify(mltk::common::Instance* instance) const;

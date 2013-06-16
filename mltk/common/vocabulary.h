@@ -57,7 +57,9 @@ class Vocabulary {
   StringMapType::const_iterator end() const { return str2id_.end(); }
 
  private:
+  // TODO(fandywang): using double array trie for str2id_
   StringMapType str2id_;
+
   std::vector<std::string> id2str_;
 };
 
