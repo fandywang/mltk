@@ -4,7 +4,7 @@ The Machine Learning Toolkit (MLTK) is an open source C++ library supporting res
 
 Depends
 ----------------------
-1. [gflags](https://code.google.com/p/gflags/) - Commandline flags module for C++
+1. [gflags](https://code.google.com/p/gflags/) - Commandline flags module for C++  
 Install to ~/thirdparty/gflags  
     ./configure --prefix=~/thirdparty/gflags  
     make & make install  
