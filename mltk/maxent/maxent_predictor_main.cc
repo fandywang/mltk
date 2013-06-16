@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
   }
   fin.close();
 
-  LOG(ERROR) << "accurarcy(" << ncorrect << " / " << ntotal << "): "
+  LOG(ERROR) << "accuracy(" << ncorrect << " / " << ntotal << "): "
       << static_cast<double>(ncorrect) / ntotal;
 
   return 0;

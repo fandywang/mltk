@@ -20,6 +20,8 @@ DEFINE_string(optim_method, "LBFGS",
               "the optimization method, LBFGS, OWLQN, or SGD.");
 DEFINE_double(l1_reg, 0.0, "the L1 regularization.");
 DEFINE_double(l2_reg, 0.0, "the L2 regularization.");
+DEFINE_int32(num_heldout, 0, "the number of heldout data.");
+DEFINE_int32(feature_freq_threshold, 1, "the threshold of feature frequency.");
 
 int main(int argc, char** argv) {
   ::google::ParseCommandLineFlags(&argc, &argv, true);
@@ -41,6 +43,8 @@ int main(int argc, char** argv) {
   if (FLAGS_l2_reg > 0.0) {
     maxent.UseL2Reg(FLAGS_l2_reg);
   }
+  maxent.SetHeldout(FLAGS_num_heldout);
+  maxent.SetFeatureFreqThreshold(FLAGS_feature_freq_threshold);
 
   LOG(INFO) << "Load training data from " << FLAGS_train_data_file;
   std::ifstream fin(FLAGS_train_data_file.c_str());

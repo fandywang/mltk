@@ -99,7 +99,6 @@
 //    1. add more unittests.
 //    2. add apps, like [hierarchial] text classification and part-of-speech
 //       tagging (POS).
-//    3. supporting trainer and predictor tools.
 
 #ifndef MLTK_MAXENT_MAXENT_H_
 #define MLTK_MAXENT_MAXENT_H_
@@ -130,7 +129,8 @@ typedef struct {
 
 class MaxEnt {
  public:
-  MaxEnt() : optimization_method_(LBFGS), l1reg_(0), l2reg_(0) {}
+  MaxEnt() : feature_freq_threshold_(0), optimization_method_(LBFGS),
+     l1reg_(0), l2reg_(0) {}
   ~MaxEnt() { Clear(); }
 
   // Load model from file.
@@ -139,9 +139,7 @@ class MaxEnt {
   bool LoadModel(const std::string& filename);
 
   // Save model to file.
-  //
-  // threshold: cut off low_weight features
-  bool SaveModel(const std::string& filename, const double threshold = 0) const;
+  bool SaveModel(const std::string& filename) const;
 
   int32_t NumClasses() const { return num_classes_; }
 
@@ -159,6 +157,10 @@ class MaxEnt {
 
   void SetHeldout(const int32_t num_heldout) { num_heldout_ = num_heldout; }
 
+  void SetFeatureFreqThreshold(const int32_t freq_threshold) {
+      feature_freq_threshold_ = freq_threshold;
+  }
+
   void UseLBFGS() { optimization_method_ = LBFGS; }
   void UseOWLQN() { optimization_method_ = OWLQN; }
   void UseSGD() { optimization_method_ = SGD; }
@@ -172,15 +174,14 @@ class MaxEnt {
  private:
   void Clear();
 
-  // 特征选择: 过滤掉出现次数少于 cutoff 的特征.
-  void InitFeatureVocabulary(const int32_t cutoff);
+  void InitFeatureVocabulary();
 
-  // 枚举所有可能的 feature, class_name * feature_name
+  // enumerate all possible features, class_name * feature_name
   void InitAllMEFeatures();
 
-  // 参数估计: 拟牛顿法
+  // parameter estimation: Quasi-Newton's Methods, including LBFGS and OWLQN.
   int32_t PerformQuasiNewton();
-  // 参数估计: 随机梯度下降法
+  // parameter estimation: Stochastic gradient descent (SGD)
   int32_t PerformSGD();
 
   double FunctionGradient(const std::vector<double>& x,
@@ -234,18 +235,24 @@ class MaxEnt {
   mltk::common::FeatureVocabulary feature_vocab_;  // vocabulary of features,
                                                    // f(x, y)
 
+  int32_t feature_freq_threshold_;  // the threshold of feature frequency, which
+                                    // is used as a simple feature selection
+                                    // strategy.
+
   std::vector<double> lambdas_;  // vector of lambda, weight for feature f(x, y)
 
   // all possible features f(x, y), format:
   // [featurename_id, [feature_id1, feature_id2, ...]]
   std::vector<std::vector<int> > all_me_features_;
 
-  // 特征函数 f(x, y) 关于经验分布 P1(X, Y) 的期望值, 用 E_p1 (f) 表示.
+  // E_p1(f), which is the expected value of f(x,y) with respect to the
+  // empirical distribution p1(x,y).
   //
   // E_p1 (f) = sum_x,y P1(x, y)f(x, y)
   std::vector<double> empirical_expectation_;
 
-  // 特征函数 f(x, y) 关于模型 P(Y|X) 与经验分布 P1(X) 的期望值, 用 E_p (f) 表示.
+  // E_p(f), which is the expected value of f(x,y) with respect to the
+  // model p(y|x) and the expirical distribution p1(x).
   //
   // E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
   std::vector<double> model_expectation_;

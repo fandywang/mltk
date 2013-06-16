@@ -58,8 +58,7 @@ bool MaxEnt::LoadModel(const std::string& filename) {
   return true;
 }
 
-bool MaxEnt::SaveModel(const std::string& filename,
-                       const double threshold) const {
+bool MaxEnt::SaveModel(const std::string& filename) const {
   FILE* fp = fopen(filename.c_str(), "w");
   if (!fp) {
     std::cerr << "error: cannot open " << filename << "!" << std::endl;
@@ -74,7 +73,6 @@ bool MaxEnt::SaveModel(const std::string& filename,
       int32_t id = feature_vocab_.FeatureId(Feature(label_id, iter->second));
       if (id < 0) continue;
       if (lambdas_[id] == 0) continue;  // ignore zero-weight features
-      if (fabs(lambdas_[id]) < threshold) continue;  // cut off low-weight features
 
       fprintf(fp, "%s\t%s\t%f\n",
               label.c_str(), iter->first.c_str(), lambdas_[id]);
@@ -96,8 +94,9 @@ int32_t MaxEnt::Train(const std::vector<Instance>& instances) {
 }
 
 void MaxEnt::AddInstance(const Instance& instance) {
-  // TODO(fandywang): 可以优化，避免拷贝
-  MaxEntInstance me_instance;
+  me_instances_.push_back(MaxEntInstance());
+  MaxEntInstance& me_instance = me_instances_.back();
+
   me_instance.label = label_vocab_.Put(instance.label());
   if (me_instance.label > Feature::MAX_LABEL_TYPES) {
     std::cerr << "error: too many types of labels." << std::endl;
@@ -114,8 +113,6 @@ void MaxEnt::AddInstance(const Instance& instance) {
         std::pair<int32_t, double>(featurename_vocab_.Put(citer->first),
                                    citer->second));
   }
-
-  me_instances_.push_back(me_instance);
 }
 
 int32_t MaxEnt::Train() {
@@ -148,17 +145,15 @@ int32_t MaxEnt::Train() {
         << std::endl;
     return 0;
   }
-  if (num_heldout_ > 0) {
-    std::random_shuffle(me_instances_.begin(), me_instances_.end());
-  }
   for (int32_t i = 0; i < num_heldout_; ++i) {
     heldout_.push_back(me_instances_.back());
     me_instances_.pop_back();
   }
 
-  // TODO(fandywang): 允许外部传入cutoff参数，做参数选择
-  int32_t cutoff = 0;
-  if (cutoff > 0) { std::cerr << "cutoff threshold = " << cutoff << std::endl; }
+  if (feature_freq_threshold_ > 0) {
+    std::cerr << "feature frequency threshold = " << feature_freq_threshold_
+        << std::endl;
+  }
 
   if (l1reg_ > 0) { std::cerr << "L1 regularizer = " << l1reg_ << std::endl; }
   if (l2reg_ > 0) { std::cerr << "L2 regularizer = " << l2reg_ << std::endl; }
@@ -168,7 +163,7 @@ int32_t MaxEnt::Train() {
   l2reg_ /= me_instances_.size();
 
   std::cerr << "preparing for estimation...";
-  InitFeatureVocabulary(cutoff);
+  InitFeatureVocabulary();
   InitAllMEFeatures();
   std::cerr << "done" << std::endl;
 
@@ -260,12 +255,12 @@ void MaxEnt::Clear() {
   heldout_.clear();
 }
 
-void MaxEnt::InitFeatureVocabulary(const int32_t cutoff) {
+void MaxEnt::InitFeatureVocabulary() {
   // count the occurrences of features
-  typedef std::map<uint32_t, int32_t> map_type;
-  map_type feature_count;
+  typedef std::map<uint32_t, int32_t> FeatureCountType;
+  FeatureCountType feature_count;
 
-  if (cutoff > 0) {
+  if (feature_freq_threshold_ > 0) {
     for (std::vector<MaxEntInstance>::const_iterator citer1
          = me_instances_.begin();
          citer1 != me_instances_.end();
@@ -288,7 +283,9 @@ void MaxEnt::InitFeatureVocabulary(const int32_t cutoff) {
          citer2 != citer1->features.end();
          ++citer2) {
       const Feature feature(citer1->label, citer2->first);
-      if (cutoff > 0 && feature_count[feature.Body()] <= cutoff) { continue; }
+      if (feature_count[feature.Body()] <= feature_freq_threshold_) {
+        continue;
+      }
       feature_vocab_.Put(feature);
     }
   }
@@ -299,15 +296,15 @@ void MaxEnt::InitAllMEFeatures() {
 
   // feature = feature_name * class
   for (int32_t f = 0; f < featurename_vocab_.Size(); ++f) {
-    // TODO(fandywang): 可以优化，避免拷贝
-    std::vector<int32_t> vi;
+    all_me_features_.push_back(std::vector<int32_t>());
+    std::vector<int32_t>& vi = all_me_features_.back();
+
     for (int32_t c = 0; c < num_classes_; ++c) {
       int32_t id = feature_vocab_.FeatureId(Feature(c, f));
       if (id >= 0) {
         vi.push_back(id);
       }
     }
-    all_me_features_.push_back(vi);
   }
 }
 
@@ -428,7 +425,6 @@ int32_t MaxEnt::Classify(const MaxEntInstance& me_instance,
 
   CalcConditionalProbability(me_instance, prob_dist);
 
-  // 将最大概率的 p(y|x) 类别 y 赋值给 me_instance
   int32_t max_label = 0;
   double max_prob = 0.0;
   for (int32_t i = 0; i < static_cast<int32_t>(prob_dist->size()); ++i) {
