@@ -5,20 +5,20 @@ The Machine Learning Toolkit (MLTK) is an open source C++ library supporting res
 Depends
 ----------------------
 1. [gflags](https://code.google.com/p/gflags/) - Commandline flags module for C++
-Install to ~/thirdparty/gflags
-    ./configure --prefix=~/thirdparty/gflags
-    make & make install
-    export GFLAGS_ROOT="~/thirdparty/gflags"
-2. [glog](https://code.google.com/p/google-glog/) - Logging library for C++
-Install to ~/thirdparty/glog
-    ./configure --prefix=~/thirdparty/glog --with-gflags=~/thirdparty/gflags
-    make & make install
-    export GLOG_ROOT="~/thirdparty/glog"
-3. [gtest](https://code.google.com/p/googletest/) - Google C++ Testing Framework
-Install to ~/thirdparty/gtest
-    ./conifgure --prefix=~/thirdparty/gtest
-    make & make install
-    export GTEST_ROOT="~/thirdparty/gtest"
+Install to ~/thirdparty/gflags  
+    ./configure --prefix=~/thirdparty/gflags  
+    make & make install  
+    export GFLAGS_ROOT="~/thirdparty/gflags"  
+2. [glog](https://code.google.com/p/google-glog/) - Logging library for C++  
+Install to ~/thirdparty/glog  
+    ./configure --prefix=~/thirdparty/glog --with-gflags=~/thirdparty/gflags  
+    make & make install  
+    export GLOG_ROOT="~/thirdparty/glog"  
+3. [gtest](https://code.google.com/p/googletest/) - Google C++ Testing Framework  
+Install to ~/thirdparty/gtest  
+    ./conifgure --prefix=~/thirdparty/gtest  
+    make & make install  
+    export GTEST_ROOT="~/thirdparty/gtest"  
 
 Copyright and license
 ---------------------
