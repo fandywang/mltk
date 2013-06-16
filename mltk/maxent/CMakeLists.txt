@@ -23,3 +23,6 @@ LINK_DIRECTORIES($ENV{GLOG_ROOT}/lib)
 
 ADD_EXECUTABLE(maxent_trainer maxent_trainer_main.cc)
 TARGET_LINK_LIBRARIES(maxent_trainer maxent base_string gflags glog)
+
+ADD_EXECUTABLE(maxent_predictor maxent_predictor_main.cc)
+TARGET_LINK_LIBRARIES(maxent_predictor maxent base_string gflags glog)
