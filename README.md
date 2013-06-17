@@ -20,6 +20,9 @@ Install to ~/thirdparty/gtest
     make & make install  
     export GTEST_ROOT="~/thirdparty/gtest"  
 
+4. [toft](https://github.com/chen3feng/toft) - C++ Base Library  
+Has been integrated into MLTK as common library.
+
 Copyright and license
 ---------------------
 Copyright (C) 2013 MLTK Project.
