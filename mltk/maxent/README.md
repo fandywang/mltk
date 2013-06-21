@@ -8,7 +8,8 @@ References
 2. Adam L. Berger, Stephen A. Della Pietra, and Vincent J. Della Pietra. 1996.
 [A maximum entropy approach to natural language processing](http://acl.ldc.upenn.edu/J/J96/J96-1002.pdf).
 Computational Linguistics.
-3. Galen Andrew, Jianfeng Gao. 2007. [Scalable Training of L1-Regularized Log-Linear Models](http://www.machinelearning.org/proceedings/icml2007/papers/449.pdf). ICML.
+3. Yoshimasa Tsuruoka, Jun'ichi Tsujii, and Sophia Ananiadou. 2009. [Stochastic Gradient Descent Training for L1-regularized Log-linear Models with Cumulative Penalty](http://www.aclweb.org/anthology-new/P/P09/P09-1054.pdf), In Proceedings of ACL-IJCNLP.
+4. Galen Andrew, Jianfeng Gao. 2007. [Scalable Training of L1-Regularized Log-Linear Models](http://www.machinelearning.org/proceedings/icml2007/papers/449.pdf). ICML.
 
 Copyright and license
 ---------------------
