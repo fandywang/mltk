@@ -4,28 +4,21 @@
 #include "mltk/common/instance.h"
 
 #include <string>
-#include <utility>
-#include <vector>
 
 #include <gtest/gtest.h>
 
 using mltk::common::Instance;
 
 TEST(Instance, Label) {
-  Instance instance1;
+  Instance instance;
 
-  instance1.set_label("IT");
-  EXPECT_EQ("IT", instance1.label());
-  instance1.set_label("Finance");
-  EXPECT_EQ("Finance", instance1.label());
-
-  Instance instance2("IT");
-  EXPECT_EQ("IT", instance2.label());
-  instance2.set_label("Finance");
-  EXPECT_EQ("Finance", instance2.label());
+  instance.set_label("IT");
+  EXPECT_EQ("IT", instance.label());
+  instance.set_label("Finance");
+  EXPECT_EQ("Finance", instance.label());
 }
 
-TEST(Instance, AddFeature) {
+TEST(Instance, Feature) {
   Instance instance("IT");
 
   instance.AddFeature("Apple", 0.65);

@@ -1,11 +1,12 @@
-// Copyright (c) 2013 XXX Project.
+// Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
-
+//
+// The Memory Insance class.
 
 #ifndef MLTK_COMMON_MEM_INSTANCE_H_
 #define MLTK_COMMON_MEM_INSTANCE_H_
 
-#include <string>
+#include <assert.h>
 #include <utility>
 #include <vector>
 
