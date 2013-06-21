@@ -13,7 +13,7 @@
 #include <iostream>
 #include <vector>
 
-#include "mltk/common/instance.h"
+#include "mltk/common/mem_instance.h"
 
 namespace mltk {
 namespace maxent {
@@ -79,8 +79,8 @@ int32_t MaxEnt::PerformSGD() {
       std::vector<double> prob_dist(NumClasses());
       const int32_t max_label = CalcConditionalProbability(me_instance,
                                                            &prob_dist);
-      logl += log(prob_dist[me_instance.label]);
-      if (max_label == me_instance.label) { ++ncorrect; }
+      logl += log(prob_dist[me_instance.label()]);
+      if (max_label == me_instance.label()) { ++ncorrect; }
 
       // learning rate : exponential decay
       const double eta = SGD_ETA0 *
@@ -89,16 +89,15 @@ int32_t MaxEnt::PerformSGD() {
       u += eta * l1param;
 
       // update weight/lambdas according to current sampled instance
-      for (std::vector<std::pair<int32_t, double> >::const_iterator j
-           = me_instance.features.begin();
-           j != me_instance.features.end(); ++j) {
+      for (MemInstance::ConstIterator citer(me_instance);
+           !citer.Done(); citer.Next()) {
         for (std::vector<int32_t>::const_iterator k
-             = all_me_features_[j->first].begin();
-             k != all_me_features_[j->first].end(); ++k) {
+             = all_me_features_[citer.FeatureId()].begin();
+             k != all_me_features_[citer.FeatureId()].end(); ++k) {
           const double me = prob_dist[feature_vocab_.GetFeature(*k).LabelId()];
           const double ee = (feature_vocab_.GetFeature(*k).LabelId()
-                             == me_instance.label ? 1.0 : 0);
-          const double grad = (me - ee) * j->second;
+                             == citer.LabelId() ? 1.0 : 0);
+          const double grad = (me - ee) * citer.FeatureValue();
           lambdas_[*k] -= eta * grad;  // GD
 
           ApplyL1Penalty(*k, u, lambdas_, q);

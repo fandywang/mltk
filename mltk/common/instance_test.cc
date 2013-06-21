@@ -27,24 +27,24 @@ TEST(Instance, Label) {
 
 TEST(Instance, AddFeature) {
   Instance instance("IT");
-  ASSERT_EQ(0, instance.GetFeatures().size());
 
   instance.AddFeature("Apple", 0.65);
   instance.AddFeature("Microsoft", 0.8);
   instance.AddFeature("ipad", 0.45);
   instance.AddFeature("Google glass", 0.6);
 
-  const std::vector<std::pair<std::string, double> >& features
-      = instance.GetFeatures();
-  ASSERT_EQ(4, features.size());
-
-  EXPECT_EQ("Apple", features[0].first);
-  EXPECT_EQ(0.65, features[0].second);
-  EXPECT_EQ("Microsoft", features[1].first);
-  EXPECT_EQ(0.8, features[1].second);
-  EXPECT_EQ("ipad", features[2].first);
-  EXPECT_EQ(0.45, features[2].second);
-  EXPECT_EQ("Google glass", features[3].first);
-  EXPECT_EQ(0.6, features[3].second);
+  Instance::ConstIterator citer(instance);
+  EXPECT_EQ("Apple", citer.FeatureName());
+  EXPECT_EQ(0.65, citer.FeatureValue());
+  citer.Next();
+  EXPECT_EQ("Microsoft", citer.FeatureName());
+  EXPECT_EQ(0.8, citer.FeatureValue());
+  citer.Next();
+  EXPECT_EQ("ipad", citer.FeatureName());
+  EXPECT_EQ(0.45, citer.FeatureValue());
+  citer.Next();
+  EXPECT_EQ("Google glass", citer.FeatureName());
+  EXPECT_EQ(0.6, citer.FeatureValue());
+  ASSERT_TRUE(citer.Done());
 }
 

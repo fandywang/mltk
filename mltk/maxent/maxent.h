@@ -117,8 +117,8 @@
 #include <string>
 #include <vector>
 
-#include "mltk/common/instance.h"
 #include "mltk/common/feature_vocabulary.h"
+#include "mltk/common/mem_instance.h"
 #include "mltk/common/vocabulary.h"
 
 namespace mltk {
@@ -126,6 +126,7 @@ namespace mltk {
 namespace common {
 class DoubleVector;
 class Feature;
+class Instance;
 }  // namespace common
 
 namespace maxent {

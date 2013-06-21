@@ -35,28 +35,13 @@ int main(int argc, char** argv) {
 
   std::string line;
   while (std::getline(fin, line)) {
-    std::vector<std::string> fields;
-    common::SplitString(line, "\t", &fields);
-
-    if (fields.size() < 2) {
-      LOG(WARNING) << "Line format error. line: " << line;
-      continue;
-    }
-
     mltk::common::Instance instance;
-    instance.set_label(fields[0]);
-    for (size_t i = 1; i < fields.size(); ++i) {
-      std::vector<std::string> feature_info;
-      common::SplitString(fields[i], ":", &feature_info);
-      const std::string& feature_name = feature_info[0];
-      double value = atof(feature_info[1].c_str());
-      instance.AddFeature(feature_name, value);
+    if (instance.ParseFromText(line)) {
+      const std::string& true_label = instance.label();
+      maxent.Classify(&instance);
+      if (instance.label() == true_label) { ++ncorrect; }
+      ++ntotal;
     }
-
-    maxent.Classify(&instance);
-
-    if (instance.label() == fields[0]) { ++ncorrect; }
-    ++ntotal;
   }
   fin.close();
 
