@@ -1,19 +1,30 @@
 // Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
+//
+// the implementation of Stochastic Gradient Descent (SGD) algorithm
+//
+// Pls refer to 'Yoshimasa Tsuruoka, Jun'ichi Tsujii, and Sophia Ananiadou.
+// 2009. Stochastic Gradient Descent Training for L1-regularized Log-linear
+// Models with Cumulative Penalty, In Proceedings of ACL-IJCNLP'
 
 #include "mltk/maxent/maxent.h"
 
 #include <math.h>
-#include <stdio.h>
 #include <iostream>
 #include <vector>
+
+#include "mltk/common/instance.h"
 
 namespace mltk {
 namespace maxent {
 
-const static double SGD_ETA0 = 1;
-const static double SGD_ITER = 30;
-const static double SGD_ALPHA = 0.85;
+using mltk::common::MemInstance;
+
+const static double SGD_ITER = 50;  // the total number of iterater
+const static double SGD_ETA0 = 1;  // learning rate eta_0
+const static double SGD_ALPHA = 0.85;  // the constant for learning rate
+                                       // exponential delay.
+                                       // eta_k = eta_0 * alpha^(-k/N)
 
 inline void ApplyL1Penalty(const int32_t i,
                            const double u,
@@ -21,18 +32,17 @@ inline void ApplyL1Penalty(const int32_t i,
                            std::vector<double>& q) {
   double& w = lambas[i];
   const double z = w;
-  double& qi = q[i];
   if (w > 0) {
-    w = std::max(0.0, w - (u + qi));
+    w = std::max(0.0, w - (u + q[i]));
   } else if (w < 0) {
-    w = std::min(0.0, w + (u - qi));
+    w = std::min(0.0, w + (u - q[i]));
   }
-  qi += w - z;
+  q[i] += w - z;
 }
 
 static double L1Norm(const std::vector<double>& v) {
   double sum = 0;
-  for (size_t i = 0; i < v.size(); ++i) sum += abs(v[i]);
+  for (size_t i = 0; i < v.size(); ++i) { sum += abs(v[i]); }
   return sum;
 }
 
@@ -43,49 +53,42 @@ int32_t MaxEnt::PerformSGD() {
     exit(1);
   }
   std::cerr << "performing SGD" << std::endl;
+  assert(SGD_ALPHA < 1.0 && SGD_ALPHA > 0.0);
+  std::cerr << "eta0 = " << SGD_ETA0 << ", alpha = " << SGD_ALPHA << std::endl;
+
+  std::vector<int32_t> instance_indexs(me_instances_.size());
+  for (size_t i = 0; i < instance_indexs.size(); ++i) {
+    instance_indexs[i] = i;
+  }
 
   const double l1param = l1reg_;
-  const int32_t d = feature_vocab_.Size();
-
-  std::vector<int32_t> ri(me_instances_.size());
-  for (size_t i = 0; i < ri.size(); ++i) ri[i] = i;
-
-  std::vector<double> grad(d);
-  int32_t iter_sample = 0;
-  const double eta0 = SGD_ETA0;
-
-  std::cerr << "eta0 = " << eta0 << " alpha = " << SGD_ALPHA << std::endl;
-
-  double u = 0;
-  std::vector<double> q(d, 0);
-  std::vector<int> last_updated(d, 0);
-  std::vector<double> sum_eta;
-  sum_eta.push_back(0);
+  double u = 0;  // u_k = C/N * sum_{t=1}^k {eta_t}
+  std::vector<double> q(feature_vocab_.Size(), 0);  // q_i^k = sum_{t=1}^k {w_i^(t+1) - w_i^(t+1/2)}
+  int32_t iter_sample = 0;  // the number of iter sample
 
   for (int32_t iter = 0; iter < SGD_ITER; ++iter) {
-    double logl = 0;
     int32_t ncorrect = 0;
-    int32_t ntotal = 0;
+    double logl = 0.0;
 
-    random_shuffle(ri.begin(), ri.end());
-    for (size_t i = 0; i < me_instances_.size(); ++i, ++ntotal, ++iter_sample) {
-      const MaxEntInstance& me_instance = me_instances_[ri[i]];
+    random_shuffle(instance_indexs.begin(), instance_indexs.end());
+
+    // batch size is 1, which is the extrem case.
+    for (size_t i = 0; i < me_instances_.size(); ++i, ++iter_sample) {
+      const MemInstance& me_instance = me_instances_[instance_indexs[i]];
 
       std::vector<double> prob_dist(NumClasses());
       const int32_t max_label = CalcConditionalProbability(me_instance,
                                                            &prob_dist);
-
-      const double eta = eta0 *
-          pow(SGD_ALPHA,
-              static_cast<double>(iter_sample) / me_instances_.size()); // exponential decay
-      u += eta * l1param;
-
-      sum_eta.push_back(sum_eta.back() + eta * l1param);
-
       logl += log(prob_dist[me_instance.label]);
       if (max_label == me_instance.label) { ++ncorrect; }
 
-      // real-valued features
+      // learning rate : exponential decay
+      const double eta = SGD_ETA0 *
+          pow(SGD_ALPHA,
+              static_cast<double>(iter_sample) / me_instances_.size());
+      u += eta * l1param;
+
+      // update weight/lambdas according to current sampled instance
       for (std::vector<std::pair<int32_t, double> >::const_iterator j
            = me_instance.features.begin();
            j != me_instance.features.end(); ++j) {
@@ -96,30 +99,29 @@ int32_t MaxEnt::PerformSGD() {
           const double ee = (feature_vocab_.GetFeature(*k).LabelId()
                              == me_instance.label ? 1.0 : 0);
           const double grad = (me - ee) * j->second;
-          lambdas_[*k] -= eta * grad;
+          lambdas_[*k] -= eta * grad;  // GD
 
           ApplyL1Penalty(*k, u, lambdas_, q);
         }
       }
     }
-    logl /= me_instances_.size();
 
+    logl /= me_instances_.size();
     double f = logl;
     if (l1param > 0) {
-      const double l1 = L1Norm(lambdas_); // this is not accurate when lazy update is used
+      const double l1 = L1Norm(lambdas_);
       f -= l1param * l1;
-      int32_t nonzero = 0;
-      for (int32_t j = 0; j < d; ++j) if (lambdas_[j] != 0) ++nonzero;
     }
 
-    fprintf(stderr, "%3d\tobj(err) = %f (%6.4f)",
-            iter + 1, f, 1 - static_cast<double>(ncorrect) / ntotal);
+    std::cerr << "iter = " << iter + 1 << ", obj(err) = " << f
+        << ", accuracy = "
+        << static_cast<double>(ncorrect) / me_instances_.size() << std::endl;
+
     if (num_heldout_ > 0) {
       double heldout_logl = CalcHeldoutLikelihood();
-      fprintf(stderr, "\theldout_logl(err) = %f (%6.4f)",
-              heldout_logl, heldout_error_);
+      std::cerr << "\t heldout_logl(err) = " << heldout_logl
+          << ", accuracy = " << heldout_accuracy_ << std::endl;
     }
-    fprintf(stderr, "\n");
   }
 
   return 0;

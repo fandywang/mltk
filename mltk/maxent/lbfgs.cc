@@ -4,7 +4,6 @@
 #include "mltk/maxent/maxent.h"
 
 #include <math.h>
-#include <stdio.h>
 #include <iostream>
 #include <vector>
 
@@ -75,13 +74,14 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
   double z[M];  // rho
 
   for (int32_t iter = 0; iter < LBFGS_MAX_ITER; ++iter) {  // stopping criteria 1
-    fprintf(stderr, "%3d\tobj(err) = %f (%6.4f)", iter + 1, -f, train_error_);
+    std::cerr << "iter = " << iter + 1
+        << ", obj(err) = " << -f
+        << ", accuracy = " << train_accuracy_ << std::endl;
     if (num_heldout_ > 0) {
       const double heldout_logl = CalcHeldoutLikelihood();
-      fprintf(stderr, "\theldout_logl(err) = %f (%6.4f)",
-              heldout_logl, heldout_error_);
+      std::cerr << "\theldout_logl(err) = " << heldout_logl
+          << ", accuracy = " << heldout_accuracy_ << std::endl;
     }
-    fprintf(stderr, "\n");
 
     // stopping criteria 2
     if (sqrt(DotProduct(grad, grad)) < MIN_GRAD_NORM) { break; }

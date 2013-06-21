@@ -13,7 +13,14 @@
 namespace mltk {
 namespace common {
 
-// data format of instance for training/testing
+// MemInstance is the inside data format of instance for training/testing,
+// which depends on Instance.
+typedef struct {
+  int32_t label;  // class id
+  std::vector<std::pair<int32_t, double> > features;  // vector of features
+} MemInstance;
+
+// Instance is the user-oriented data format of instance for training/testing.
 class Instance {
  public:
   Instance() {}

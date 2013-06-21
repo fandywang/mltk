@@ -16,10 +16,16 @@
 //
 //         p^\star = argmax_{p \in C} H(p)
 //
-//    Where H(p) = - \sum_{x,y} {p1(x) * p(y|x) log p(y|x)}
+//    Where H(p) = - \sum_{x,y} {p1(x) * p(y|x) log p(y|x)},
+//          ( H(p) = H(Y|X), H(XY) = H(X|Y) + H(X) )
 //          C = {p \in P | E_p(f_i) = E_p1(f_i), i = 1,2,...,n}, constraint.
-//          p1(f) = \sum_{x,y} {p1(x,y) * f(x,y)}
-//          p(f) = \sum_{x,y} {p1(x) * p(y|x) * f(x,y)}, f is a feature function
+//          E_p1(f) = \sum_{x,y} {p1(x,y) * f(x,y)}, is the probability of
+//          feature f(x, y) in the training data.
+//          E_p(f) = \sum_{x,y} {p1(x) * p(y|x) * f(x,y)}, is the probability in
+//          the model.
+//
+//          p1(x,y) is the probability of (x, y) in the training data.
+//          p1(x) is the probability of (x) in the training data.
 //
 //    Obviously, the maximum entropy principle presents us with a problem in
 //    constrained optimization.
@@ -111,6 +117,7 @@
 #include <string>
 #include <vector>
 
+#include "mltk/common/instance.h"
 #include "mltk/common/feature_vocabulary.h"
 #include "mltk/common/vocabulary.h"
 
@@ -119,16 +126,9 @@ namespace mltk {
 namespace common {
 class DoubleVector;
 class Feature;
-class Instance;
 }  // namespace common
 
 namespace maxent {
-
-typedef struct {
-  int32_t label;  // class id
-
-  std::vector<std::pair<int32_t, double> > features;  // vector of features
-} MaxEntInstance;
 
 class MaxEnt {
  public:
@@ -153,17 +153,19 @@ class MaxEnt {
   }
 
   // Training
-  void AddInstance(const mltk::common::Instance& instance);
+  void AddInstance(const common::Instance& instance);
   bool Train();
 
-  bool Train(const std::vector<mltk::common::Instance>& instances);
+  bool Train(const std::vector<common::Instance>& instances);
 
   void SetNumHeldout(const int32_t num_heldout) { num_heldout_ = num_heldout; }
 
+  // to support feature selection.
   void SetFeatureFreqThreshold(const int32_t freq_threshold) {
       feature_freq_threshold_ = freq_threshold;
   }
 
+  // set optimization method
   void UseLBFGS() { optimization_method_ = LBFGS; }
   void UseOWLQN() { optimization_method_ = OWLQN; }
   void UseSGD() { optimization_method_ = SGD; }
@@ -172,7 +174,7 @@ class MaxEnt {
   void UseL2Reg(const double reg) { l2reg_ = reg; }
 
   // Classify
-  std::vector<double> Classify(mltk::common::Instance* instance) const;
+  std::vector<double> Classify(common::Instance* instance) const;
 
  private:
   void Clear();
@@ -191,12 +193,12 @@ class MaxEnt {
                           std::vector<double>* grad);
 
   std::vector<double> PerformLBFGS(const std::vector<double>& x0);
-  double BacktrackingLineSearch(const mltk::common::DoubleVector& x0,
-                                const mltk::common::DoubleVector& grad0,
+  double BacktrackingLineSearch(const common::DoubleVector& x0,
+                                const common::DoubleVector& grad0,
                                 const double f0,
-                                const mltk::common::DoubleVector& dx,
-                                mltk::common::DoubleVector* x,
-                                mltk::common::DoubleVector* grad1);
+                                const common::DoubleVector& dx,
+                                common::DoubleVector* x,
+                                common::DoubleVector* grad1);
 
   // update E_p (f), formula: E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
   double UpdateModelExpectation();
@@ -204,36 +206,36 @@ class MaxEnt {
   std::vector<double> PerformOWLQN(const std::vector<double>& x0,
                                    double C);
   double RegularizedFuncGrad(const double C,
-                             const mltk::common::DoubleVector& x,
-                             mltk::common::DoubleVector& grad);
+                             const common::DoubleVector& x,
+                             common::DoubleVector& grad);
   double ConstrainedLineSearch(double C,
-                               const mltk::common::DoubleVector& x0,
-                               const mltk::common::DoubleVector& grad0,
+                               const common::DoubleVector& x0,
+                               const common::DoubleVector& grad0,
                                const double f0,
-                               const mltk::common::DoubleVector& dx,
-                               mltk::common::DoubleVector& x,
-                               mltk::common::DoubleVector& grad1);
+                               const common::DoubleVector& dx,
+                               common::DoubleVector& x,
+                               common::DoubleVector& grad1);
 
-  int32_t Classify(const MaxEntInstance& me_instance,
+  int32_t Classify(const common::MemInstance& me_instance,
                    std::vector<double>* prob_dist) const;
 
   // calculate p(y|x)
-  int32_t CalcConditionalProbability(const MaxEntInstance& me_instance,
+  int32_t CalcConditionalProbability(const common::MemInstance& me_instance,
                                      std::vector<double>* prob_dist) const;
 
   double CalcHeldoutLikelihood();
 
  private:
-  std::vector<MaxEntInstance> me_instances_;  // training data
-  double train_error_;  // current error rate on the training data
+  std::vector<common::MemInstance> me_instances_;  // training data
+  double train_accuracy_;  // current accuracy on the training data
 
   int32_t num_heldout_;
-  std::vector<MaxEntInstance> heldout_;  // heldout data
-  double heldout_error_;  // current error rate on the heldout data
+  std::vector<common::MemInstance> heldout_;  // heldout data
+  double heldout_accuracy_;  // current accuracy on the heldout data
 
-  mltk::common::Vocabulary featurename_vocab_;  // featurename mapping, {x : id}
-  mltk::common::Vocabulary label_vocab_;  // labelname mapping, {y : id}
-  mltk::common::FeatureVocabulary feature_vocab_;  // vocabulary of features,
+  common::Vocabulary featurename_vocab_;  // featurename mapping, {x : id}
+  common::Vocabulary label_vocab_;  // labelname mapping, {y : id}
+  common::FeatureVocabulary feature_vocab_;  // vocabulary of features,
                                                    // f(x, y)
 
   int32_t feature_freq_threshold_;  // the threshold of feature frequency, which

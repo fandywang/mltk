@@ -23,6 +23,7 @@ namespace maxent {
 
 using mltk::common::Feature;
 using mltk::common::Instance;
+using mltk::common::MemInstance;
 
 bool MaxEnt::LoadModel(const std::string& filename) {
   Clear();
@@ -92,8 +93,8 @@ bool MaxEnt::Train(const std::vector<Instance>& instances) {
 }
 
 void MaxEnt::AddInstance(const Instance& instance) {
-  me_instances_.push_back(MaxEntInstance());
-  MaxEntInstance& me_instance = me_instances_.back();
+  me_instances_.push_back(MemInstance());
+  MemInstance& me_instance = me_instances_.back();
 
   me_instance.label = label_vocab_.Put(instance.label());
   if (me_instance.label > Feature::MAX_LABEL_TYPES) {
@@ -137,7 +138,7 @@ bool MaxEnt::Train() {
 
   if (feature_freq_threshold_ > 0) {
     std::cerr << "the threshold of feature frequency = "
-      << feature_freq_threshold_ << std::endl;
+        << feature_freq_threshold_ << std::endl;
   }
 
   if (l1reg_ > 0) { std::cerr << "L1 regularizer = " << l1reg_ << std::endl; }
@@ -163,7 +164,7 @@ bool MaxEnt::Train() {
     empirical_expectation_[i] = 0;
   }
   for (int32_t n = 0; n < static_cast<int32_t>(me_instances_.size()); ++n) {
-    const MaxEntInstance* me_instance = &me_instances_[n];
+    const MemInstance* me_instance = &me_instances_[n];
     for (std::vector<std::pair<int32_t, double> >::const_iterator citer
          = me_instance->features.begin();
          citer != me_instance->features.end();
@@ -206,7 +207,7 @@ bool MaxEnt::Train() {
 }
 
 std::vector<double> MaxEnt::Classify(Instance* instance) const {
-  MaxEntInstance me_instance;
+  MemInstance me_instance;
   const std::vector<std::pair<std::string, double> >& features
       = instance->GetFeatures();
   for (std::vector<std::pair<std::string, double> >::const_iterator citer
@@ -245,7 +246,7 @@ void MaxEnt::InitFeatureVocabulary() {
   FeatureCountType feature_count;
 
   if (feature_freq_threshold_ > 0) {
-    for (std::vector<MaxEntInstance>::const_iterator citer1
+    for (std::vector<MemInstance>::const_iterator citer1
          = me_instances_.begin();
          citer1 != me_instances_.end();
          ++citer1) {
@@ -258,7 +259,7 @@ void MaxEnt::InitFeatureVocabulary() {
     }
   }
 
-  for (std::vector<MaxEntInstance>::const_iterator citer1
+  for (std::vector<MemInstance>::const_iterator citer1
        = me_instances_.begin();
        citer1 != me_instances_.end();
        ++citer1) {
@@ -349,7 +350,7 @@ double MaxEnt::UpdateModelExpectation() {
   model_expectation_.resize(feature_vocab_.Size());
   for (int i = 0; i < feature_vocab_.Size(); ++i) { model_expectation_[i] = 0; }
 
-  for (std::vector<MaxEntInstance>::const_iterator citer
+  for (std::vector<MemInstance>::const_iterator citer
        = me_instances_.begin();
        citer != me_instances_.end();
        ++citer) {
@@ -379,7 +380,7 @@ double MaxEnt::UpdateModelExpectation() {
     if (l2reg_ > 0) { logl -= lambdas_[i] * lambdas_[i] * l2reg_; }
   }
 
-  train_error_ = 1 - static_cast<double>(ncorrect) / me_instances_.size();
+  train_accuracy_ = static_cast<double>(ncorrect) / me_instances_.size();
   logl /= me_instances_.size();
 
   return logl;
@@ -389,7 +390,7 @@ double MaxEnt::CalcHeldoutLikelihood() {
   double logl = 0;
   int32_t ncorrect = 0;
 
-  for (std::vector<MaxEntInstance>::const_iterator citer = heldout_.begin();
+  for (std::vector<MemInstance>::const_iterator citer = heldout_.begin();
        citer != heldout_.end();
        ++citer) {
     std::vector<double> prob_dist(label_vocab_.Size());
@@ -398,13 +399,13 @@ double MaxEnt::CalcHeldoutLikelihood() {
     if (label == citer->label) { ++ncorrect; }
   }
 
-  heldout_error_ = 1 - static_cast<double>(ncorrect) / heldout_.size();
+  heldout_accuracy_ = static_cast<double>(ncorrect) / heldout_.size();
 
   return logl /= heldout_.size();
 }
 
 // p(y | x)
-int32_t MaxEnt::Classify(const MaxEntInstance& me_instance,
+int32_t MaxEnt::Classify(const MemInstance& me_instance,
                          std::vector<double>* prob_dist) const {
   assert(label_vocab_.Size() == static_cast<int32_t>(prob_dist->size()));
 
@@ -423,7 +424,7 @@ int32_t MaxEnt::Classify(const MaxEntInstance& me_instance,
 }
 
 int32_t MaxEnt::CalcConditionalProbability(
-    const MaxEntInstance& me_instance, std::vector<double>* prob_dist) const {
+    const MemInstance& me_instance, std::vector<double>* prob_dist) const {
   std::vector<double> powv(label_vocab_.Size(), 0.0);
 
   for (std::vector<std::pair<int32_t, double> >::const_iterator citer
