@@ -25,16 +25,16 @@ TEST(MemInstance, Feature) {
   mem_instance.AddFeature(4, 0.6);
 
   MemInstance::ConstIterator citer(mem_instance);
-  EXPECT_EQ(1, citer.FeatureId());
+  EXPECT_EQ(1, citer.FeatureNameId());
   EXPECT_EQ(0.65, citer.FeatureValue());
   citer.Next();
-  EXPECT_EQ(2, citer.FeatureId());
+  EXPECT_EQ(2, citer.FeatureNameId());
   EXPECT_EQ(0.8, citer.FeatureValue());
   citer.Next();
-  EXPECT_EQ(3, citer.FeatureId());
+  EXPECT_EQ(3, citer.FeatureNameId());
   EXPECT_EQ(0.45, citer.FeatureValue());
   citer.Next();
-  EXPECT_EQ(4, citer.FeatureId());
+  EXPECT_EQ(4, citer.FeatureNameId());
   EXPECT_EQ(0.6, citer.FeatureValue());
   ASSERT_TRUE(citer.Done());
 }

@@ -41,7 +41,7 @@ class Vocabulary {
     return citer->second;
   }
 
-  std::string Str(const int32_t id) const {
+  const std::string& Str(const int32_t id) const {
     assert(id >= 0 && id < static_cast<int32_t>(id2str_.size()));
     return id2str_[id];
   }

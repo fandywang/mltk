@@ -13,12 +13,14 @@
 #include <iostream>
 #include <vector>
 
+#include "mltk/common/feature.h"
 #include "mltk/common/mem_instance.h"
 
 namespace mltk {
 namespace maxent {
 
 using mltk::common::MemInstance;
+using mltk::common::Feature;
 
 const static double SGD_ITER = 50;  // the total number of iterater
 const static double SGD_ETA0 = 1;  // learning rate eta_0
@@ -28,9 +30,9 @@ const static double SGD_ALPHA = 0.85;  // the constant for learning rate
 
 inline void ApplyL1Penalty(const size_t id,
                            const double u,
-                           std::vector<double>& lambas,
+                           std::vector<double>* lambdas,
                            std::vector<double>& q) {
-  double& w = lambas[id];
+  double& w = (*lambdas)[id];
   const double z = w;
   if (w > 0) {
     w = std::max(0.0, w - (u + q[id]));
@@ -38,12 +40,6 @@ inline void ApplyL1Penalty(const size_t id,
     w = std::min(0.0, w + (u - q[id]));
   }
   q[id] += w - z;
-}
-
-static double L1Norm(const std::vector<double>& v) {
-  double sum = 0.0;
-  for (size_t i = 0; i < v.size(); ++i) { sum += abs(v[i]); }
-  return sum;
 }
 
 int32_t MaxEnt::PerformSGD() {
@@ -61,8 +57,9 @@ int32_t MaxEnt::PerformSGD() {
 
   const double l1param = l1reg_;
   double u = 0;  // u_k = C/N * sum_{t=1}^k {eta_t}
-  std::vector<double> q(feature_vocab_.Size(), 0);  // q_i^k = sum_{t=1}^k {w_i^(t+1) - w_i^(t+1/2)}
+  std::vector<double> q(model_data_.NumFeatures(), 0);  // q_i^k = sum_{t=1}^k {w_i^(t+1) - w_i^(t+1/2)}
   int32_t iter_sample = 0;  // the number of iter sample
+  std::vector<double>* lambdas = model_data_.MutableLambdas();
 
   for (int32_t iter = 0; iter < SGD_ITER; ++iter) {
     int32_t ncorrect = 0;
@@ -74,7 +71,7 @@ int32_t MaxEnt::PerformSGD() {
     for (size_t i = 0; i < mem_instances_.size(); ++i, ++iter_sample) {
       const MemInstance& mem_instance = mem_instances_[instance_ids[i]];
 
-      std::vector<double> prob_dist(NumClasses());
+      std::vector<double> prob_dist(model_data_.NumClasses());
       const int32_t max_label = CalcConditionalProbability(mem_instance,
                                                            &prob_dist);
       logl += log(prob_dist[mem_instance.label()]);
@@ -89,16 +86,17 @@ int32_t MaxEnt::PerformSGD() {
       // update weight/lambdas according to current sampled instance
       for (MemInstance::ConstIterator citer(mem_instance);
            !citer.Done(); citer.Next()) {
-        for (size_t i = 0; i < all_me_features_[citer.FeatureId()].size(); ++i) {
-          const int32_t id = all_me_features_[citer.FeatureId()][i];
-          const double me
-            = prob_dist[feature_vocab_.GetFeature(id).LabelId()];
-          const double ee = (feature_vocab_.GetFeature(id).LabelId()
-                             == citer.LabelId() ? 1.0 : 0);
+        const std::vector<int32_t>& feature_ids
+            = model_data_.FeatureIds(citer.FeatureNameId());
+        for (size_t i = 0; i < feature_ids.size(); ++i) {
+          const int32_t feature_id = feature_ids[i];
+          const Feature& feature = model_data_.FeatureAt(feature_id);
+          const double me = prob_dist[feature.LabelId()];
+          const double ee = (feature.LabelId() == citer.LabelId() ? 1.0 : 0);
           const double grad = (me - ee) * citer.FeatureValue();
-          lambdas_[id] -= eta * grad;  // GD
+          (*lambdas)[feature_id] -= eta * grad;  // GD
 
-          ApplyL1Penalty(id, u, lambdas_, q);
+          ApplyL1Penalty(feature_id, u, lambdas, q);
         }
       }
     }
@@ -106,7 +104,7 @@ int32_t MaxEnt::PerformSGD() {
     logl /= mem_instances_.size();
     double f = - logl;
     if (l1param > 0) {
-      const double l1 = L1Norm(lambdas_);
+      const double l1 = model_data_.L1NormLambdas();
       f += l1param * l1;
     }
 
@@ -114,7 +112,7 @@ int32_t MaxEnt::PerformSGD() {
         << ", accuracy = "
         << static_cast<double>(ncorrect) / mem_instances_.size() << std::endl;
 
-    if (num_heldout_ > 0) {
+    if (heldout_.size() > 0) {
       double heldout_logl = CalcHeldoutLikelihood();
       std::cerr << "\t heldout_logl(err) = " << -1 * heldout_logl
           << ", accuracy = " << heldout_accuracy_ << std::endl;

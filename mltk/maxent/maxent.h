@@ -128,9 +128,8 @@
 #include <string>
 #include <vector>
 
-#include "mltk/common/feature_vocabulary.h"
+#include "mltk/common/model_data.h"
 #include "mltk/common/mem_instance.h"
-#include "mltk/common/vocabulary.h"
 
 namespace mltk {
 
@@ -144,37 +143,25 @@ namespace maxent {
 
 class MaxEnt {
  public:
-  MaxEnt() : num_heldout_(0), feature_freq_threshold_(0),
-     optimization_method_(LBFGS), l1reg_(0), l2reg_(0) {}
+  MaxEnt() : optimization_method_(LBFGS), l1reg_(0), l2reg_(0) {}
   ~MaxEnt() { Clear(); }
 
   // Load model from file.
   //
-  // Line format: class \t feature \t weight(lambda)
+  // Line format: label_name \t feature_name \t weight(lambda)
   bool LoadModel(const std::string& filename);
 
   // Save model to file.
   bool SaveModel(const std::string& filename) const;
 
-  int32_t NumClasses() const { return label_vocab_.Size(); }
+  int32_t NumClasses() const { return model_data_.NumClasses(); }
 
-  std::string GetClassLabel(int32_t id) const { return label_vocab_.Str(id); }
-
-  int32_t GetClassId(const std::string& label) const {
-    return label_vocab_.Id(label);
+  const std::string& GetClassLabel(int32_t label_id) const {
+    return model_data_.Label(label_id);
   }
 
-  // Training
-  void AddInstance(const common::Instance& instance);
-  bool Train();
-
-  bool Train(const std::vector<common::Instance>& instances);
-
-  void SetNumHeldout(const int32_t num_heldout) { num_heldout_ = num_heldout; }
-
-  // to support feature selection.
-  void SetFeatureFreqThreshold(const int32_t freq_threshold) {
-      feature_freq_threshold_ = freq_threshold;
+  int32_t GetClassId(const std::string& label) const {
+    return model_data_.LabelId(label);
   }
 
   // set optimization method
@@ -185,16 +172,15 @@ class MaxEnt {
   void UseL1Reg(const double reg) { l1reg_ = reg; }
   void UseL2Reg(const double reg) { l2reg_ = reg; }
 
+  // Training
+  bool Train(const std::vector<common::Instance>& instances,
+             int32_t num_heldout = 0);
+
   // Classify
   std::vector<double> Classify(common::Instance* instance) const;
 
  private:
   void Clear();
-
-  void InitFeatureVocabulary();
-
-  // enumerate all possible features, class_name * feature_name
-  void InitAllMEFeatures();
 
   // parameter estimation: Quasi-Newton's Methods, including LBFGS and OWLQN.
   void PerformQuasiNewton();
@@ -241,24 +227,15 @@ class MaxEnt {
   std::vector<common::MemInstance> mem_instances_;  // training data
   double train_accuracy_;  // current accuracy on the training data
 
-  int32_t num_heldout_;
   std::vector<common::MemInstance> heldout_;  // heldout data
   double heldout_accuracy_;  // current accuracy on the heldout data
 
-  common::Vocabulary featurename_vocab_;  // feature name mapping, {x : id}
-  common::Vocabulary label_vocab_;  // label mapping, {y : id}
-  common::FeatureVocabulary feature_vocab_;  // vocabulary of features, f(x, y)
+  common::ModelData model_data_;  // the maxent model
 
-  std::vector<double> lambdas_;  // vector of lambda, weight for feature f(x, y)
-                                 // lambdas_.size() == feature_vocab_.size()
-
-  int32_t feature_freq_threshold_;  // the threshold of feature frequency, which
-                                    // is used as a simple feature selection
-                                    // strategy.
-
-  // all possible features f(x, y), format:
-  // [featurename_id, [feature1.id, feature2.id, ...]]
-  std::vector<std::vector<int32_t> > all_me_features_;
+  // Note: OWLQN and SGD are available only for L1-regularization
+  enum OPTIMIZATION_METHOD { LBFGS, OWLQN, SGD } optimization_method_;
+  double l1reg_;  // L1-regularization
+  double l2reg_;  // L2-regularization
 
   // E_p1(f), which is the expected value of f(x,y) with respect to the
   // empirical distribution p1(x,y).
@@ -271,11 +248,6 @@ class MaxEnt {
   //
   // E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
   std::vector<double> model_expectation_;
-
-  // Note: OWLQN and SGD are available only for L1-regularization
-  enum OPTIMIZATION_METHOD { LBFGS, OWLQN, SGD } optimization_method_;
-  double l1reg_;  // L1-regularization
-  double l2reg_;  // L2-regularization
 };
 
 }  // namespace maxent

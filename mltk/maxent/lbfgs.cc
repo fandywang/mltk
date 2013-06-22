@@ -79,7 +79,7 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
         << ", obj(err) = " << f
         << ", accuracy = " << train_accuracy_ << std::endl;
 
-    if (num_heldout_ > 0) {
+    if (heldout_.size() > 0) {
       const double heldout_logl = CalcHeldoutLikelihood();
       std::cerr << "\theldout_logl(err) = " << -1 * heldout_logl
           << ", accuracy = " << heldout_accuracy_ << std::endl;

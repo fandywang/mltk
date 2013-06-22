@@ -43,7 +43,7 @@ class MemInstance {
       ++feature_idx_;
     }
 
-    int32_t FeatureId() const {
+    int32_t FeatureNameId() const {
       assert(!Done());
       return mem_instance_.features_[feature_idx_].first;
     }

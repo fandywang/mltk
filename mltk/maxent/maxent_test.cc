@@ -17,25 +17,26 @@ TEST(MaxEnt, Train) {
   MaxEnt maxent;
   EXPECT_EQ(0, maxent.NumClasses());
 
+  std::vector<Instance> instances;
   Instance instance1("IT");
   instance1.AddFeature("Apple", 0.68);
   instance1.AddFeature("ipad", 0.5);
-  maxent.AddInstance(instance1);
-  maxent.AddInstance(instance1);
+  instances.push_back(instance1);
+  instances.push_back(instance1);
 
   Instance instance2("IT");
   instance2.AddFeature("Macbook Air", 0.8);
   instance2.AddFeature("iphone 4s", 0.9);
-  maxent.AddInstance(instance2);
-  maxent.AddInstance(instance2);
+  instances.push_back(instance2);
+  instances.push_back(instance2);
 
   Instance instance3("Finance");
   instance3.AddFeature("Wall Street", 0.8);
   instance3.AddFeature("QE", 0.9);
   instance3.AddFeature("stock", 0.88);
   instance1.AddFeature("Apple", 0.2);
-  maxent.AddInstance(instance3);
-  maxent.AddInstance(instance3);
+  instances.push_back(instance3);
+  instances.push_back(instance3);
 
   EXPECT_EQ(2, maxent.NumClasses());
 
@@ -44,7 +45,7 @@ TEST(MaxEnt, Train) {
   EXPECT_EQ("IT", maxent.GetClassLabel(0));
   EXPECT_EQ("Finance", maxent.GetClassLabel(1));
 
-  ASSERT_TRUE(maxent.Train());
+  ASSERT_TRUE(maxent.Train(instances));
 
   ASSERT_TRUE(maxent.SaveModel(kModelFile));
 

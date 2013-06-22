@@ -25,9 +25,9 @@ TEST(FeatureVocabulary, PutAndGet) {
   EXPECT_EQ(-1, feature_vocab.FeatureId(Feature(10, 400)));
 
   EXPECT_EQ(10, feature_vocab.GetFeature(0).LabelId());
-  EXPECT_EQ(100, feature_vocab.GetFeature(0).FeatureId());
+  EXPECT_EQ(100, feature_vocab.GetFeature(0).FeatureNameId());
   EXPECT_EQ(40, feature_vocab.GetFeature(3).LabelId());
-  EXPECT_EQ(400, feature_vocab.GetFeature(3).FeatureId());
+  EXPECT_EQ(400, feature_vocab.GetFeature(3).FeatureNameId());
 
   feature_vocab.Clear();
   ASSERT_EQ(0, feature_vocab.Size());
