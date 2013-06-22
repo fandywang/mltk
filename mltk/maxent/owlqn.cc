@@ -1,5 +1,10 @@
 // Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
+//
+// Implementations of OWLQN algorithm.
+//
+// Pls refer to 'Galen Andrew and Jianfeng Gao, Scalable training of
+// L1-regularized log-linear models, in ICML 2007.'
 
 #include "mltk/maxent/maxent.h"
 
@@ -75,11 +80,11 @@ std::vector<double> MaxEnt::PerformOWLQN(const std::vector<double>& x0,
     DoubleVector pg = PseudoGradient(x, grad, C);
 
     std::cerr << "iter = " << iter + 1
-        << ", obj(err) = " << -f
+        << ", obj(err) = " << f
         << ", accuracy = " << train_accuracy_ << std::endl;
     if (num_heldout_ > 0) {
       const double heldout_logl = CalcHeldoutLikelihood();
-      std::cerr << "\theldout_logl(err) = " << heldout_logl
+      std::cerr << "\theldout_logl(err) = " << -1 * heldout_logl
           << ", accuracy = " << heldout_accuracy_ << std::endl;
     }
 

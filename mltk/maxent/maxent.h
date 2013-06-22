@@ -85,7 +85,7 @@
 //    and the parameters of such models are typically trained to minimize an
 //    objective function
 //
-//        f(\lambda) = l(\lambda) + r(\lambda)
+//        f(\lambda) = l(\lambda) - r(\lambda)
 //
 //    where l is the negative log-probability of a labelled training samples
 //    according to the model, and r is a regularization term that favors
@@ -94,16 +94,27 @@
 //    particularly if the number of parameters is very high relative to the
 //    amount of training data.
 //
-//    We focus on two kinds of commonly used regularizations, L1-Regularization
-//    and L2-Regularization. They defined by
+//    We focus on the two most common regularization methods, called
+//    L1 and L2 regularization. They defined by
 //
 //       L1-Reg: r(\lambda) = a * ||\lambda||_1 = a * sum_i |\lambda_i|, a > 0
 //       L2-Reg: r(\lambda) = a * ||\lambda||_2 = a * sum_i \lambda_i^2, a > 0
+//
+// Data-Format:
+//
+//    MLTK.MaxEnt uses the popular sparse data format.
+//
+//       <class-label>\t<feature-key>:<feature-value>\t...\t<feature-key>:<feature-value>\n
+//
+//    The feature-key's are expected to be in numeric or string value, and the
+//    class label for test data is required but not used; it's okay to put in a
+//    dummy placeholder value such as 0 for test data.
 //
 // Features:
 //    1. supporting real-valued features.
 //    2. supporting three fast and effective parameter estimation algorithms,
 //       including LBFGS, OWLQN and SGD.
+//    3. supporting text-format feature name.
 //
 // TODO:
 //    1. add apps, like [hierarchial] text classification and part-of-speech
@@ -186,7 +197,7 @@ class MaxEnt {
   void InitAllMEFeatures();
 
   // parameter estimation: Quasi-Newton's Methods, including LBFGS and OWLQN.
-  int32_t PerformQuasiNewton();
+  void PerformQuasiNewton();
   // parameter estimation: Stochastic gradient descent (SGD)
   int32_t PerformSGD();
 
@@ -217,37 +228,37 @@ class MaxEnt {
                                common::DoubleVector& x,
                                common::DoubleVector& grad1);
 
-  int32_t Classify(const common::MemInstance& me_instance,
+  int32_t Classify(const common::MemInstance& mem_instance,
                    std::vector<double>* prob_dist) const;
 
   // calculate p(y|x)
-  int32_t CalcConditionalProbability(const common::MemInstance& me_instance,
+  int32_t CalcConditionalProbability(const common::MemInstance& mem_instance,
                                      std::vector<double>* prob_dist) const;
 
   double CalcHeldoutLikelihood();
 
  private:
-  std::vector<common::MemInstance> me_instances_;  // training data
+  std::vector<common::MemInstance> mem_instances_;  // training data
   double train_accuracy_;  // current accuracy on the training data
 
   int32_t num_heldout_;
   std::vector<common::MemInstance> heldout_;  // heldout data
   double heldout_accuracy_;  // current accuracy on the heldout data
 
-  common::Vocabulary featurename_vocab_;  // featurename mapping, {x : id}
-  common::Vocabulary label_vocab_;  // labelname mapping, {y : id}
-  common::FeatureVocabulary feature_vocab_;  // vocabulary of features,
-                                                   // f(x, y)
+  common::Vocabulary featurename_vocab_;  // feature name mapping, {x : id}
+  common::Vocabulary label_vocab_;  // label mapping, {y : id}
+  common::FeatureVocabulary feature_vocab_;  // vocabulary of features, f(x, y)
+
+  std::vector<double> lambdas_;  // vector of lambda, weight for feature f(x, y)
+                                 // lambdas_.size() == feature_vocab_.size()
 
   int32_t feature_freq_threshold_;  // the threshold of feature frequency, which
                                     // is used as a simple feature selection
                                     // strategy.
 
-  std::vector<double> lambdas_;  // vector of lambda, weight for feature f(x, y)
-
   // all possible features f(x, y), format:
-  // [featurename_id, [feature_id1, feature_id2, ...]]
-  std::vector<std::vector<int> > all_me_features_;
+  // [featurename_id, [feature1.id, feature2.id, ...]]
+  std::vector<std::vector<int32_t> > all_me_features_;
 
   // E_p1(f), which is the expected value of f(x,y) with respect to the
   // empirical distribution p1(x,y).

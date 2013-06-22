@@ -83,7 +83,7 @@ bool MaxEnt::SaveModel(const std::string& filename) const {
 }
 
 bool MaxEnt::Train(const std::vector<Instance>& instances) {
-  me_instances_.clear();
+  mem_instances_.clear();
   for (std::vector<Instance>::const_iterator citer = instances.begin();
        citer != instances.end(); ++citer) {
     AddInstance(*citer);
@@ -93,19 +93,21 @@ bool MaxEnt::Train(const std::vector<Instance>& instances) {
 }
 
 void MaxEnt::AddInstance(const Instance& instance) {
-  me_instances_.push_back(MemInstance());
-  MemInstance& me_instance = me_instances_.back();
+  mem_instances_.push_back(MemInstance());
+  MemInstance& mem_instance = mem_instances_.back();
 
-  me_instance.set_label(label_vocab_.Put(instance.label()));
-  if (me_instance.label() > Feature::MAX_LABEL_TYPES) {
+  mem_instance.set_label(label_vocab_.Put(instance.label()));
+  if (mem_instance.label() > Feature::MAX_LABEL_TYPES) {
     std::cerr << "error: too many types of labels." << std::endl;
     exit(1);
   }
 
   for (Instance::ConstIterator citer(instance); !citer.Done(); citer.Next()) {
-    me_instance.AddFeature(featurename_vocab_.Put(citer.FeatureName()),
-                           citer.FeatureValue());
+    mem_instance.AddFeature(featurename_vocab_.Put(citer.FeatureName()),
+                            citer.FeatureValue());
   }
+
+  // mem_instance.AddFeature(featurename_vocab_.Put("BIAS"), 1.0);
 }
 
 bool MaxEnt::Train() {
@@ -115,19 +117,19 @@ bool MaxEnt::Train() {
     return false;
   }
 
-  if (me_instances_.size() == 0) {
+  if (mem_instances_.size() == 0) {
     std::cerr << "error: no training data." << std::endl;
     return false;
   }
 
-  if (num_heldout_ >= static_cast<int32_t>(me_instances_.size())) {
+  if (num_heldout_ >= static_cast<int32_t>(mem_instances_.size())) {
     std::cerr << "error: too much heldout data. no training data is available."
         << std::endl;
     return false;
   }
   for (int32_t i = 0; i < num_heldout_; ++i) {
-    heldout_.push_back(me_instances_.back());
-    me_instances_.pop_back();
+    heldout_.push_back(mem_instances_.back());
+    mem_instances_.pop_back();
   }
 
   if (feature_freq_threshold_ > 0) {
@@ -139,8 +141,8 @@ bool MaxEnt::Train() {
   if (l2reg_ > 0) { std::cerr << "L2 regularizer = " << l2reg_ << std::endl; }
 
   // normalize
-  l1reg_ /= me_instances_.size();
-  l2reg_ /= me_instances_.size();
+  l1reg_ /= mem_instances_.size();
+  l2reg_ /= mem_instances_.size();
 
   std::cerr << "preparing for estimation...";
   InitFeatureVocabulary();
@@ -148,7 +150,7 @@ bool MaxEnt::Train() {
   std::cerr << "done" << std::endl;
 
   std::cerr << "number of classes = " << label_vocab_.Size() << std::endl;
-  std::cerr << "number of instances = " << me_instances_.size() << std::endl;
+  std::cerr << "number of instances = " << mem_instances_.size() << std::endl;
   std::cerr << "number of features = " << feature_vocab_.Size() << std::endl;
 
   // calc E_p1 (f), p1(x, y) = count(x, y) / N
@@ -157,22 +159,20 @@ bool MaxEnt::Train() {
   for (int32_t i = 0; i < feature_vocab_.Size(); ++i) {
     empirical_expectation_[i] = 0;
   }
-  for (int32_t n = 0; n < static_cast<int32_t>(me_instances_.size()); ++n) {
-    for (MemInstance::ConstIterator citer(me_instances_[n]);
+  for (int32_t n = 0; n < static_cast<int32_t>(mem_instances_.size()); ++n) {
+    for (MemInstance::ConstIterator citer(mem_instances_[n]);
          !citer.Done(); citer.Next()) {
-      for (std::vector<int32_t>::const_iterator k
-           = all_me_features_[citer.FeatureId()].begin();
-           k != all_me_features_[citer.FeatureId()].end();
-           ++k) {
-        if (feature_vocab_.GetFeature(*k).LabelId() == citer.LabelId()) {
-          empirical_expectation_[*k] += citer.FeatureValue();
+      for (size_t i = 0; i < all_me_features_[citer.FeatureId()].size(); ++i) {
+        const int32_t id = all_me_features_[citer.FeatureId()][i];
+        if (feature_vocab_.GetFeature(id).LabelId() == citer.LabelId()) {
+          empirical_expectation_[id] += citer.FeatureValue();
           break;
         }
       }
     }
   }
   for (int32_t i = 0; i < feature_vocab_.Size(); ++i) {
-    empirical_expectation_[i] /= me_instances_.size();
+    empirical_expectation_[i] /= mem_instances_.size();
   }
   std::cerr << "done" << std::endl;
 
@@ -198,16 +198,16 @@ bool MaxEnt::Train() {
 }
 
 std::vector<double> MaxEnt::Classify(Instance* instance) const {
-  MemInstance me_instance;
+  MemInstance mem_instance;
   for (Instance::ConstIterator citer(*instance); !citer.Done(); citer.Next()) {
     int32_t id = featurename_vocab_.Id(citer.FeatureName());
     if (id >= 0) {  // only using the feature exists in training data
-      me_instance.AddFeature(id, citer.FeatureValue());
+      mem_instance.AddFeature(id, citer.FeatureValue());
     }
   }
 
   std::vector<double> prob_dist(label_vocab_.Size());
-  int32_t label = Classify(me_instance, &prob_dist);
+  int32_t label = Classify(mem_instance, &prob_dist);
   instance->set_label(GetClassLabel(label));
 
   return prob_dist;
@@ -221,7 +221,7 @@ void MaxEnt::Clear() {
   all_me_features_.clear();
   empirical_expectation_.clear();
   model_expectation_.clear();
-  me_instances_.clear();
+  mem_instances_.clear();
   heldout_.clear();
 }
 
@@ -231,16 +231,16 @@ void MaxEnt::InitFeatureVocabulary() {
   FeatureCountType feature_count;
 
   if (feature_freq_threshold_ > 0) {
-    for (size_t n = 0; n < me_instances_.size(); ++n) {
-      for (MemInstance::ConstIterator citer(me_instances_[n]);
+    for (size_t n = 0; n < mem_instances_.size(); ++n) {
+      for (MemInstance::ConstIterator citer(mem_instances_[n]);
            !citer.Done(); citer.Next()) {
         feature_count[Feature(citer.LabelId(), citer.FeatureId()).Body()]++;
       }
     }
   }
 
-  for (size_t n = 0; n < me_instances_.size(); ++n) {
-    for (MemInstance::ConstIterator citer(me_instances_[n]);
+  for (size_t n = 0; n < mem_instances_.size(); ++n) {
+    for (MemInstance::ConstIterator citer(mem_instances_[n]);
          !citer.Done(); citer.Next()) {
       const Feature feature(citer.LabelId(), citer.FeatureId());
       if (feature_freq_threshold_ > 0
@@ -269,10 +269,9 @@ void MaxEnt::InitAllMEFeatures() {
   }
 }
 
-int32_t MaxEnt::PerformQuasiNewton() {
+void MaxEnt::PerformQuasiNewton() {
   const int32_t dim = feature_vocab_.Size();
   std::vector<double> x0(dim);
-
   for (int32_t i = 0; i < dim; ++i) { x0[i] = lambdas_[i]; }
 
   std::vector<double> x;
@@ -290,8 +289,6 @@ int32_t MaxEnt::PerformQuasiNewton() {
   }
 
   for (int32_t i = 0; i < dim; ++i) { lambdas_[i] = x[i]; }
-
-  return 0;
 }
 
 double MaxEnt::FunctionGradient(const std::vector<double>& x,
@@ -305,13 +302,13 @@ double MaxEnt::FunctionGradient(const std::vector<double>& x,
   // update gradient
   if (l2reg_ == 0) {
     for (size_t i = 0; i < x.size(); ++i) {
-      (*grad)[i] = -(empirical_expectation_[i] - model_expectation_[i]);
+      (*grad)[i] = model_expectation_[i] - empirical_expectation_[i];
     }
   } else {
     const double c = l2reg_ * 2;
     for (size_t i = 0; i < x.size(); ++i) {
-      (*grad)[i] = -(empirical_expectation_[i] - model_expectation_[i]
-                    - c * lambdas_[i]);
+      (*grad)[i] = model_expectation_[i] - empirical_expectation_[i]
+                   + c * lambdas_[i];
     }
   }
 
@@ -325,35 +322,33 @@ double MaxEnt::UpdateModelExpectation() {
   model_expectation_.resize(feature_vocab_.Size());
   for (int i = 0; i < feature_vocab_.Size(); ++i) { model_expectation_[i] = 0; }
 
-  for (size_t n = 0; n < me_instances_.size(); ++n) {
+  for (size_t n = 0; n < mem_instances_.size(); ++n) {
     std::vector<double> prob_dist(label_vocab_.Size());
-    int32_t max_label = CalcConditionalProbability(me_instances_[n],
+    int32_t max_label = CalcConditionalProbability(mem_instances_[n],
                                                    &prob_dist);
 
-    logl += log(prob_dist[me_instances_[n].label()]);
-    if (max_label == me_instances_[n].label()) { ++ncorrect; }
+    logl += log(prob_dist[mem_instances_[n].label()]);
+    if (max_label == mem_instances_[n].label()) { ++ncorrect; }
 
     // model_expectation
-    for (MemInstance::ConstIterator citer(me_instances_[n]);
+    for (MemInstance::ConstIterator citer(mem_instances_[n]);
          !citer.Done(); citer.Next()) {
-      for (std::vector<int32_t>::const_iterator k
-           = all_me_features_[citer.FeatureId()].begin();
-           k != all_me_features_[citer.FeatureId()].end();
-           ++k) {
-        model_expectation_[*k]
-          += prob_dist[feature_vocab_.GetFeature(*k).LabelId()]
+      for (size_t i = 0; i < all_me_features_[citer.FeatureId()].size(); ++i) {
+        const int32_t id = all_me_features_[citer.FeatureId()][i];
+        model_expectation_[id]
+          += prob_dist[feature_vocab_.GetFeature(id).LabelId()]
              * citer.FeatureValue();
       }
     }
   }
 
   for (int32_t i = 0; i < feature_vocab_.Size(); ++i) {
-    model_expectation_[i] /= me_instances_.size();
+    model_expectation_[i] /= mem_instances_.size();
     if (l2reg_ > 0) { logl -= lambdas_[i] * lambdas_[i] * l2reg_; }
   }
 
-  train_accuracy_ = static_cast<double>(ncorrect) / me_instances_.size();
-  logl /= me_instances_.size();
+  train_accuracy_ = static_cast<double>(ncorrect) / mem_instances_.size();
+  logl /= mem_instances_.size();
 
   return logl;
 }
@@ -377,11 +372,11 @@ double MaxEnt::CalcHeldoutLikelihood() {
 }
 
 // p(y | x)
-int32_t MaxEnt::Classify(const MemInstance& me_instance,
+int32_t MaxEnt::Classify(const MemInstance& mem_instance,
                          std::vector<double>* prob_dist) const {
   assert(label_vocab_.Size() == static_cast<int32_t>(prob_dist->size()));
 
-  CalcConditionalProbability(me_instance, prob_dist);
+  CalcConditionalProbability(mem_instance, prob_dist);
 
   int32_t max_label = 0;
   double max_prob = 0.0;
@@ -396,26 +391,26 @@ int32_t MaxEnt::Classify(const MemInstance& me_instance,
 }
 
 int32_t MaxEnt::CalcConditionalProbability(
-    const MemInstance& me_instance, std::vector<double>* prob_dist) const {
+    const MemInstance& mem_instance, std::vector<double>* prob_dist) const {
   std::vector<double> powv(label_vocab_.Size(), 0.0);
 
-  for (MemInstance::ConstIterator citer(me_instance);
+  for (MemInstance::ConstIterator citer(mem_instance);
        !citer.Done(); citer.Next()) {
-    for (std::vector<int32_t>::const_iterator k
-         = all_me_features_[citer.FeatureId()].begin();
-         k != all_me_features_[citer.FeatureId()].end();
-         ++k) {
-      powv[feature_vocab_.GetFeature(*k).LabelId()]
-          += lambdas_[*k] * citer.FeatureValue();
+    for (size_t i = 0; i < all_me_features_[citer.FeatureId()].size(); ++i) {
+      const int32_t id = all_me_features_[citer.FeatureId()][i];
+      powv[feature_vocab_.GetFeature(id).LabelId()]
+          += lambdas_[id] * citer.FeatureValue();
     }
   }
 
   std::vector<double>::const_iterator pmax
       = max_element(powv.begin(), powv.end());
+  // std::cerr << "pmax: " << *pmax << std::endl;
   double sum = 0.0;
   double offset = std::max(0.0, *pmax - 700);  // to avoid overflow
   for (int32_t label = 0; label < label_vocab_.Size(); ++label) {
     double pow_value = powv[label] - offset;
+    // std::cerr << "powv : " << pow_value << ", label: " << label << std::endl;
     double prod = exp(pow_value);  // exp(w * x)
     assert(prod != 0);
 

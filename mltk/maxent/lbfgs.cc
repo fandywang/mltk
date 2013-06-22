@@ -1,5 +1,10 @@
 // Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
+//
+// Implementation of LBFGS algorithm.
+//
+// Pls refer to 'Jorge Nocedal, "Updating Quasi-Newton Matrices With Limited
+// Storage", Mathematics of Computation, 1980.'
 
 #include "mltk/maxent/maxent.h"
 
@@ -22,10 +27,6 @@ const static double LINE_SEARCH_BETA = 0.5;
 const static int32_t LBFGS_MAX_ITER = 300;
 const static double MIN_GRAD_NORM = 0.0001;
 
-//
-// Jorge Nocedal, "Updating Quasi-Newton Matrices With Limited Storage",
-// Mathematics of Computation, Vol. 35, No. 151, pp. 773-782, 1980.
-//
 DoubleVector ApproximateHg(const int32_t iter,
                            const DoubleVector& grad,
                            const DoubleVector s[],
@@ -65,8 +66,8 @@ DoubleVector ApproximateHg(const int32_t iter,
 std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
   const size_t dim = x0.size();
   DoubleVector x(x0);
-
   DoubleVector grad(dim), dx(dim);
+
   double f = FunctionGradient(x.STLVector(), &(grad.STLVector()));
 
   DoubleVector s[M];
@@ -75,11 +76,12 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
 
   for (int32_t iter = 0; iter < LBFGS_MAX_ITER; ++iter) {  // stopping criteria 1
     std::cerr << "iter = " << iter + 1
-        << ", obj(err) = " << -f
+        << ", obj(err) = " << f
         << ", accuracy = " << train_accuracy_ << std::endl;
+
     if (num_heldout_ > 0) {
       const double heldout_logl = CalcHeldoutLikelihood();
-      std::cerr << "\theldout_logl(err) = " << heldout_logl
+      std::cerr << "\theldout_logl(err) = " << -1 * heldout_logl
           << ", accuracy = " << heldout_accuracy_ << std::endl;
     }
 
