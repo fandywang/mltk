@@ -23,6 +23,29 @@ Install to $HOME/thirdparty/gtest
 4. [toft](https://github.com/chen3feng/toft) - C++ Base Library  
 Has been integrated into MLTK as [common](https://github.com/fandywang/mltk/tree/master/common) library.
 
+Usage
+--------------------
+### Use CMake and Make
+
+In the project root:
+
+    mkdir build
+    cd build
+    cmake ..
+
+By now Makefiles should be created.
+Then, to build executables and do all that linking stuff,  
+
+    make
+
+To prepare all your tests, run this:
+
+    cmake -Dtest=ON ..
+
+To run all tests easily,
+
+    make test
+
 Copyright and license
 ---------------------
 Copyright (C) 2013 MLTK Project.
