@@ -12,11 +12,9 @@
 #include <vector>
 
 #include "mltk/common/double_vector.h"
-#include "mltk/common/feature_vocabulary.h"
 #include "mltk/common/feature.h"
 #include "mltk/common/instance.h"
-#include "mltk/common/vocabulary.h"
-#include "mltk/common/model_data.h"
+#include "mltk/common/mem_instance.h"
 
 namespace mltk {
 namespace maxent {
@@ -40,8 +38,13 @@ bool MaxEnt::Train(const std::vector<Instance>& instances,
 
   // initialize model
   std::cerr << "initialize model data...";
-  model_data_.Initialize(instances);
-  model_data_.FormatInstances(instances, &mem_instances_);
+  model_data_.InitFromInstances(instances);
+
+  for (size_t n = 0; n < instances.size(); ++n) {
+    mem_instances_.push_back(MemInstance());
+    MemInstance& mem_instance = mem_instances_.back();
+    model_data_.FormatInstance(instances[n], &mem_instance);
+  }
   if (mem_instances_.size() == 0) {
     std::cerr << "error: no training data." << std::endl;
     return false;
@@ -215,8 +218,8 @@ double MaxEnt::UpdateModelExpectation() {
     int32_t max_label = CalcConditionalProbability(mem_instances_[n],
                                                    &prob_dist);
 
-    logl += log(prob_dist[mem_instances_[n].label()]);
-    if (max_label == mem_instances_[n].label()) { ++ncorrect; }
+    logl += log(prob_dist[mem_instances_[n].label_id()]);
+    if (max_label == mem_instances_[n].label_id()) { ++ncorrect; }
 
     // model_expectation
     for (MemInstance::ConstIterator citer(mem_instances_[n]);
@@ -253,8 +256,8 @@ double MaxEnt::CalcHeldoutLikelihood() {
        ++citer) {
     std::vector<double> prob_dist(model_data_.NumClasses());
     int32_t label_id = Classify(*citer, &prob_dist);
-    logl += log(prob_dist[citer->label()]);
-    if (label_id == citer->label()) { ++ncorrect; }
+    logl += log(prob_dist[citer->label_id()]);
+    if (label_id == citer->label_id()) { ++ncorrect; }
   }
 
   heldout_accuracy_ = static_cast<double>(ncorrect) / heldout_.size();

@@ -10,10 +10,10 @@ using mltk::common::MemInstance;
 TEST(MemInstance, Label) {
   MemInstance mem_instance;
 
-  mem_instance.set_label(1);
-  EXPECT_EQ(1, mem_instance.label());
-  mem_instance.set_label(2);
-  EXPECT_EQ(2, mem_instance.label());
+  mem_instance.set_label_id(1);
+  EXPECT_EQ(1, mem_instance.label_id());
+  mem_instance.set_label_id(2);
+  EXPECT_EQ(2, mem_instance.label_id());
 }
 
 TEST(MemInstance, Feature) {
@@ -36,6 +36,7 @@ TEST(MemInstance, Feature) {
   citer.Next();
   EXPECT_EQ(4, citer.FeatureNameId());
   EXPECT_EQ(0.6, citer.FeatureValue());
+  citer.Next();
   ASSERT_TRUE(citer.Done());
 }
 

@@ -19,8 +19,8 @@
 namespace mltk {
 namespace maxent {
 
-using mltk::common::MemInstance;
 using mltk::common::Feature;
+using mltk::common::MemInstance;
 
 const static double SGD_ITER = 50;  // the total number of iterater
 const static double SGD_ETA0 = 1;  // learning rate eta_0
@@ -74,8 +74,8 @@ int32_t MaxEnt::PerformSGD() {
       std::vector<double> prob_dist(model_data_.NumClasses());
       const int32_t max_label = CalcConditionalProbability(mem_instance,
                                                            &prob_dist);
-      logl += log(prob_dist[mem_instance.label()]);
-      if (max_label == mem_instance.label()) { ++ncorrect; }
+      logl += log(prob_dist[mem_instance.label_id()]);
+      if (max_label == mem_instance.label_id()) { ++ncorrect; }
 
       // learning rate : exponential decay
       const double eta = SGD_ETA0 *

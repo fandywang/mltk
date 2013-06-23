@@ -38,6 +38,7 @@ TEST(Instance, Feature) {
   citer.Next();
   EXPECT_EQ("Google glass", citer.FeatureName());
   EXPECT_EQ(0.6, citer.FeatureValue());
+  citer.Next();
   ASSERT_TRUE(citer.Done());
 }
 

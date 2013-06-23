@@ -18,14 +18,23 @@ namespace common {
 class MemInstance {
  public:
   MemInstance() {}
-  explicit MemInstance(int32_t label) : label_(label) {}
+  explicit MemInstance(int32_t label_id) : label_id_(label_id) {}
   ~MemInstance() {}
 
-  void set_label(int32_t label) { label_ = label; }
-  int32_t label() const { return label_; }
+  void Clear() {
+    label_id_ = -1;
+    features_.clear();
+  }
 
-  void AddFeature(int32_t feature_id, double value) {
-    features_.push_back(std::pair<int32_t, double>(feature_id, value));
+  void set_label_id(int32_t label_id) {
+    assert(label_id >= 0);
+    label_id_ = label_id;
+  }
+  int32_t label_id() const { return label_id_; }
+
+  void AddFeature(int32_t feature_name_id, double value) {
+    assert(feature_name_id >= 0);
+    features_.push_back(std::pair<int32_t, double>(feature_name_id, value));
   }
 
   // A const interator over all features in an instance.
@@ -60,7 +69,7 @@ class MemInstance {
 
     int32_t LabelId() const {
       assert(!Done());
-      return mem_instance_.label_;
+      return mem_instance_.label_id_;
     }
 
    private:
@@ -69,7 +78,7 @@ class MemInstance {
   };
 
  private:
-  int32_t label_;  // class id
+  int32_t label_id_;  // class id
   std::vector<std::pair<int32_t, double> > features_;  // vector of features
 };
 

@@ -1,12 +1,12 @@
 
-INCLUDE_DIRECTORIES(${MLTK_SOURCE_DIR})
 INCLUDE_DIRECTORIES($ENV{GTEST_ROOT}/include)
 LINK_DIRECTORIES($ENV{GTEST_ROOT}/lib)
 
+SET(EXECUTABLE_OUTPUT_PATH ${MLTK_SOURCE_DIR}/bin/common/system/memory)
 
 ADD_EXECUTABLE(memory_test unaligned_test.cpp)
 TARGET_LINK_LIBRARIES(memory_test gtest gtest_main)
 TARGET_LINK_LIBRARIES(memory_test ${CMAKE_THREAD_LIBS_INIT})
 
-ADD_TEST(NAME memory_test COMMAND memory_test)
+ADD_TEST(NAME memory_test COMMAND ${EXECUTABLE_OUTPUT_PATH}/memory_test)
 

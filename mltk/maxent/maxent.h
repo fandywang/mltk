@@ -123,13 +123,11 @@
 #ifndef MLTK_MAXENT_MAXENT_H_
 #define MLTK_MAXENT_MAXENT_H_
 
-#include <algorithm>
-#include <map>
 #include <string>
 #include <vector>
 
-#include "mltk/common/model_data.h"
 #include "mltk/common/mem_instance.h"
+#include "mltk/common/model_data.h"
 
 namespace mltk {
 

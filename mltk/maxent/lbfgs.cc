@@ -19,7 +19,7 @@ namespace maxent {
 
 using mltk::common::DoubleVector;
 
-const static int32_t M = 10;
+const static int32_t LBFGS_M = 10;
 const static double LINE_SEARCH_ALPHA = 0.1;
 const static double LINE_SEARCH_BETA = 0.5;
 
@@ -33,29 +33,29 @@ DoubleVector ApproximateHg(const int32_t iter,
                            const DoubleVector y[],
                            const double z[]) {
   int32_t offset, bound;
-  if (iter <= M) {
+  if (iter <= LBFGS_M) {
     offset = 0;
     bound = iter;
   }
   else {
-    offset = iter - M;
-    bound = M;
+    offset = iter - LBFGS_M;
+    bound = LBFGS_M;
   }
 
   DoubleVector q = grad;
-  double alpha[M], beta[M];
+  double alpha[LBFGS_M], beta[LBFGS_M];
   for (int32_t i = bound - 1; i >= 0; --i) {
-    const int32_t j = (i + offset) % M;
+    const int32_t j = (i + offset) % LBFGS_M;
     alpha[i] = z[j] * DotProduct(s[j], q);
     q += -alpha[i] * y[j];
   }
   if (iter > 0) {
-    const int32_t j = (iter - 1) % M;
+    const int32_t j = (iter - 1) % LBFGS_M;
     const double gamma = ((1.0 / z[j]) / DotProduct(y[j], y[j]));
     q *= gamma;
   }
   for (int32_t i = 0; i <= bound - 1; ++i) {
-    const int32_t j = (i + offset) % M;
+    const int32_t j = (i + offset) % LBFGS_M;
     beta[i] = z[j] * DotProduct(y[j], q);
     q += s[j] * (alpha[i] - beta[i]);
   }
@@ -70,9 +70,9 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
 
   double f = FunctionGradient(x.STLVector(), &(grad.STLVector()));
 
-  DoubleVector s[M];
-  DoubleVector y[M];
-  double z[M];  // rho
+  DoubleVector s[LBFGS_M];
+  DoubleVector y[LBFGS_M];
+  double z[LBFGS_M];  // rho
 
   for (int32_t iter = 0; iter < LBFGS_MAX_ITER; ++iter) {  // stopping criteria 1
     std::cerr << "iter = " << iter + 1
@@ -93,9 +93,9 @@ std::vector<double> MaxEnt::PerformLBFGS(const std::vector<double>& x0) {
     DoubleVector x1(dim), grad1(dim);
     f = BacktrackingLineSearch(x, grad, f, dx, &x1, &grad1);
 
-    s[iter % M] = x1 - x;
-    y[iter % M] = grad1 - grad;
-    z[iter % M] = 1.0 / DotProduct(y[iter % M], s[iter % M]);
+    s[iter % LBFGS_M] = x1 - x;
+    y[iter % LBFGS_M] = grad1 - grad;
+    z[iter % LBFGS_M] = 1.0 / DotProduct(y[iter % LBFGS_M], s[iter % LBFGS_M]);
     x = x1;
     grad = grad1;
   }

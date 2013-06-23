@@ -19,7 +19,7 @@ namespace maxent {
 
 using mltk::common::DoubleVector;
 
-const static int32_t M = 10;
+const static int32_t OWLQN_M = 10;
 const static double LINE_SEARCH_ALPHA = 0.1;
 const static double LINE_SEARCH_BETA = 0.5;
 
@@ -72,9 +72,9 @@ std::vector<double> MaxEnt::PerformOWLQN(const std::vector<double>& x0,
   DoubleVector grad(dim), dx(dim);
   double f = RegularizedFuncGrad(C, x, grad);
 
-  DoubleVector s[M];
-  DoubleVector y[M];
-  double z[M];  // rho
+  DoubleVector s[OWLQN_M];
+  DoubleVector y[OWLQN_M];
+  double z[OWLQN_M];  // rho
 
   for (int32_t iter = 0; iter < OWLQN_MAX_ITER; ++iter) {  // stopping criteria 1
     DoubleVector pg = PseudoGradient(x, grad, C);
@@ -97,9 +97,9 @@ std::vector<double> MaxEnt::PerformOWLQN(const std::vector<double>& x0,
     DoubleVector x1(dim), grad1(dim);
     f = ConstrainedLineSearch(C, x, pg, f, dx, x1, grad1);
 
-    s[iter % M] = x1 - x;
-    y[iter % M] = grad1 - grad;
-    z[iter % M] = 1.0 / DotProduct(y[iter % M], s[iter % M]);
+    s[iter % OWLQN_M] = x1 - x;
+    y[iter % OWLQN_M] = grad1 - grad;
+    z[iter % OWLQN_M] = 1.0 / DotProduct(y[iter % OWLQN_M], s[iter % OWLQN_M]);
 
     x = x1;
     grad = grad1;
