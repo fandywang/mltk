@@ -1,4 +1,4 @@
-// Copyright (c) 2013 XXX Project.
+// Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
 
 #include "mltk/common/model_data.h"
@@ -114,6 +114,6 @@ void ModelData::FormatInstance(const Instance& instance,
   }
 }
 
-}
-}
+}  // namespace common
+}  // namespace mltk
 
