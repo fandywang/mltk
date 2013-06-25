@@ -10,6 +10,9 @@ References
 Computational Linguistics.
 3. Yoshimasa Tsuruoka, Jun'ichi Tsujii, and Sophia Ananiadou. 2009. [Stochastic Gradient Descent Training for L1-regularized Log-linear Models with Cumulative Penalty](http://www.aclweb.org/anthology-new/P/P09/P09-1054.pdf), In Proceedings of ACL-IJCNLP.
 4. Galen Andrew, Jianfeng Gao. 2007. [Scalable Training of L1-Regularized Log-Linear Models](http://www.machinelearning.org/proceedings/icml2007/papers/449.pdf). ICML.
+5. [Michael Collins](http://www.cs.columbia.edu/~mcollins/). [Log-linear Models](http://www.cs.columbia.edu/~mcollins/loglinear.pdf). Tech notes.
+6. [Michael Collins](http://www.cs.columbia.edu/~mcollins/). [Log-linear Models, MEMMs, and CRFs](http://www.cs.columbia.edu/~mcollins/crf.pdf). Tech notes.
+
 
 Copyright and license
 ---------------------
