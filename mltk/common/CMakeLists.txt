@@ -18,7 +18,7 @@ IF (test)
     ADD_EXECUTABLE(common_test
       double_vector_test.cc feature_test.cc feature_vocabulary_test.cc
       vocabulary_test.cc instance_test.cc mem_instance_test.cc model_data_test.cc)
-    TARGET_LINK_LIBRARIES(common_test model_data gtest gtest_main)
+    TARGET_LINK_LIBRARIES(common_test mltk_common gtest gtest_main)
     TARGET_LINK_LIBRARIES(common_test ${CMAKE_THREAD_LIBS_INIT})
 
     ADD_TEST(NAME common_test COMMAND ${EXECUTABLE_OUTPUT_PATH}/common_test)

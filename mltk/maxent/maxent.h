@@ -157,6 +157,8 @@ class MaxEnt {
 
   int32_t NumClasses() const { return model_data_.NumClasses(); }
 
+  const common::ModelData& GetModelData() const { return model_data_; }
+
   const std::string& GetClassLabel(int32_t label_id) const {
     return model_data_.Label(label_id);
   }

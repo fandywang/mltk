@@ -127,9 +127,9 @@ class ModelData {
 
   Vocabulary label_vocab_;  // label mapping, {y : id}
 
-  Vocabulary featurename_vocab_;  // feature name mapping, {x : id}
+  Vocabulary featurename_vocab_;  // vocabulary of feature names, {x : id}
 
-  FeatureVocabulary feature_vocab_;  // vocabulary of features, f(x, y)
+  FeatureVocabulary feature_vocab_;  // vocabulary of features, {f(x, y) : id}
 
   std::vector<double> lambdas_;  // vector of lambda, weight for feature f(x, y)
                                  // lambdas_.size() == feature_vocab_.size()
