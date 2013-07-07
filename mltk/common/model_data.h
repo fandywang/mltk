@@ -101,6 +101,9 @@ class ModelData {
     return num_active;
   }
 
+  int32_t CalcConditionalProbability(const MemInstance& mem_instance,
+                                     std::vector<double>* prob_dist) const;
+
  private:
   void InitAllFeatures() {
     for (int32_t feature_name_id = 0;

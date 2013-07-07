@@ -2,16 +2,16 @@
 SET(LIBRARY_OUTPUT_PATH ${MLTK_SOURCE_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH ${MLTK_SOURCE_DIR}/bin/mltk/maxent)
 
-SET(SRC_LIST maxent.cc lbfgs.cc owlqn.cc sgd.cc)
+SET(SRC_LIST maxent.cc optimizer.cc lbfgs.cc owlqn.cc sgd.cc)
 
 ADD_LIBRARY(maxent SHARED ${SRC_LIST})
 SET_TARGET_PROPERTIES(maxent PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-TARGET_LINK_LIBRARIES(maxent model_data)
+TARGET_LINK_LIBRARIES(maxent mltk_common)
 
 ADD_LIBRARY(maxent_static STATIC ${SRC_LIST})
 SET_TARGET_PROPERTIES(maxent_static PROPERTIES OUTPUT_NAME "maxent")
 SET_TARGET_PROPERTIES(maxent_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-TARGET_LINK_LIBRARIES(maxent_static model_data)
+TARGET_LINK_LIBRARIES(maxent_static mltk_common)
 
 IF (test)
     INCLUDE_DIRECTORIES($ENV{GTEST_ROOT}/include)

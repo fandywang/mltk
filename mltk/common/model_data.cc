@@ -114,6 +114,47 @@ void ModelData::FormatInstance(const Instance& instance,
   }
 }
 
+int32_t ModelData::CalcConditionalProbability(
+    const MemInstance& mem_instance, std::vector<double>* prob_dist) const {
+  std::vector<double> powv(NumClasses(), 0.0);
+
+  for (MemInstance::ConstIterator citer(mem_instance);
+       !citer.Done(); citer.Next()) {
+    const std::vector<int32_t>& feature_ids = FeatureIds(citer.FeatureNameId());
+    for (size_t i = 0; i < feature_ids.size(); ++i) {
+      const int32_t feature_id = feature_ids[i];
+      powv[FeatureAt(feature_id).LabelId()]
+          += lambdas_[feature_id] * citer.FeatureValue();
+    }
+  }
+
+  std::vector<double>::const_iterator pmax
+      = max_element(powv.begin(), powv.end());
+  double sum = 0.0;
+  double offset = std::max(0.0, *pmax - 700);  // to avoid overflow
+  for (int32_t label_id = 0; label_id < NumClasses(); ++label_id) {
+    double pow_value = powv[label_id] - offset;
+    double prod = exp(pow_value);  // exp(w * x)
+    assert(prod != 0);
+
+    (*prob_dist)[label_id] = prod;
+    sum += prod;
+  }
+
+  int32_t max_label = 0;
+  if (sum > 0.0) {
+    for (int32_t label_id = 0; label_id < NumClasses(); ++label_id) {
+      (*prob_dist)[label_id] /= sum;
+      if ((*prob_dist)[label_id] > (*prob_dist)[max_label]) {
+        max_label = label_id;
+      }
+    }
+  }
+  assert(max_label >= 0);
+
+  return max_label;
+}
+
 }  // namespace common
 }  // namespace mltk
 

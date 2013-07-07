@@ -139,10 +139,13 @@ class Instance;
 
 namespace maxent {
 
+class Optimizer;
+
 class MaxEnt {
  public:
-  MaxEnt() : optimization_method_(LBFGS), l1reg_(0), l2reg_(0) {}
-  ~MaxEnt() { Clear(); }
+  MaxEnt() : optimizer_(NULL) {}
+  explicit MaxEnt(Optimizer* optimizer) : optimizer_(optimizer) {}
+  ~MaxEnt() {}
 
   // Load model from file.
   //
@@ -162,93 +165,21 @@ class MaxEnt {
     return model_data_.LabelId(label);
   }
 
-  // set optimization method
-  void UseLBFGS() { optimization_method_ = LBFGS; }
-  void UseOWLQN() { optimization_method_ = OWLQN; }
-  void UseSGD() { optimization_method_ = SGD; }
-
-  void UseL1Reg(const double reg) { l1reg_ = reg; }
-  void UseL2Reg(const double reg) { l2reg_ = reg; }
-
   // Training
   bool Train(const std::vector<common::Instance>& instances,
              int32_t num_heldout = 0);
 
-  // Classify
-  std::vector<double> Classify(common::Instance* instance) const;
+  // Predict
+  std::vector<double> Predict(common::Instance* instance) const;
 
  private:
-  void Clear();
-
-  // parameter estimation: Quasi-Newton's Methods, including LBFGS and OWLQN.
-  void PerformQuasiNewton();
-  // parameter estimation: Stochastic gradient descent (SGD)
-  int32_t PerformSGD();
-
-  double FunctionGradient(const std::vector<double>& x,
-                          std::vector<double>* grad);
-
-  std::vector<double> PerformLBFGS(const std::vector<double>& x0);
-  double BacktrackingLineSearch(const common::DoubleVector& x0,
-                                const common::DoubleVector& grad0,
-                                const double f0,
-                                const common::DoubleVector& dx,
-                                common::DoubleVector* x,
-                                common::DoubleVector* grad1);
-
-  // update E_p (f), formula: E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
-  double UpdateModelExpectation();
-
-  std::vector<double> PerformOWLQN(const std::vector<double>& x0,
-                                   double C);
-  double RegularizedFuncGrad(const double C,
-                             const common::DoubleVector& x,
-                             common::DoubleVector& grad);
-  double ConstrainedLineSearch(double C,
-                               const common::DoubleVector& x0,
-                               const common::DoubleVector& grad0,
-                               const double f0,
-                               const common::DoubleVector& dx,
-                               common::DoubleVector& x,
-                               common::DoubleVector& grad1);
-
-  int32_t Classify(const common::MemInstance& mem_instance,
-                   std::vector<double>* prob_dist) const;
-
-  // calculate p(y|x)
-  int32_t CalcConditionalProbability(const common::MemInstance& mem_instance,
-                                     std::vector<double>* prob_dist) const;
-
-  double CalcHeldoutLikelihood();
-
- private:
-  std::vector<common::MemInstance> mem_instances_;  // training data
-  double train_accuracy_;  // current accuracy on the training data
-
-  std::vector<common::MemInstance> heldout_;  // heldout data
-  double heldout_accuracy_;  // current accuracy on the heldout data
+  Optimizer* optimizer_;  // the optimization algorithm
 
   common::ModelData model_data_;  // the maxent model
-
-  // Note: OWLQN and SGD are available only for L1-regularization
-  enum OPTIMIZATION_METHOD { LBFGS, OWLQN, SGD } optimization_method_;
-  double l1reg_;  // L1-regularization
-  double l2reg_;  // L2-regularization
-
-  // E_p1(f), which is the expected value of f(x,y) with respect to the
-  // empirical distribution p1(x,y).
-  //
-  // E_p1 (f) = sum_x,y P1(x, y)f(x, y)
-  std::vector<double> empirical_expectation_;
-
-  // E_p(f), which is the expected value of f(x,y) with respect to the
-  // model p(y|x) and the expirical distribution p1(x).
-  //
-  // E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
-  std::vector<double> model_expectation_;
 };
 
 }  // namespace maxent
 }  // namespace mltk
 
 #endif  // MLTK_MAXENT_MAXENT_H_
+

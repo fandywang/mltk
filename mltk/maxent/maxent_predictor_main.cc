@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     mltk::common::Instance instance;
     if (instance.ParseFromText(line)) {
       const std::string& true_label = instance.label();
-      maxent.Classify(&instance);
+      maxent.Predict(&instance);
       if (instance.label() == true_label) { ++ncorrect; }
       ++ntotal;
     }

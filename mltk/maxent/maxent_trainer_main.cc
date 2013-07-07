@@ -13,6 +13,10 @@
 
 #include "common/base/string/algorithm.h"
 #include "mltk/common/instance.h"
+#include "mltk/maxent/lbfgs.h"
+#include "mltk/maxent/optimizer.h"
+#include "mltk/maxent/owlqn.h"
+#include "mltk/maxent/sgd.h"
 
 DEFINE_string(train_data_file, "", "the filename of training data.");
 DEFINE_string(model_file, "", "the filename of maxent model.");
@@ -26,22 +30,21 @@ int main(int argc, char** argv) {
   ::google::ParseCommandLineFlags(&argc, &argv, true);
 
   LOG(INFO) << "Initialize MaxEnt.";
-  mltk::maxent::MaxEnt maxent;
+  mltk::maxent::Optimizer* optim = NULL;
   if (FLAGS_optim_method == "LBFGS") {
-    maxent.UseLBFGS();
+    optim = new mltk::maxent::LBFGS();
+    optim->UseL2Reg(FLAGS_l2_reg);
   } else if (FLAGS_optim_method == "OWLQN") {
-    maxent.UseOWLQN();
+    optim = new mltk::maxent::OWLQN();
+    optim->UseL1Reg(FLAGS_l1_reg);
   } else if (FLAGS_optim_method == "SGD") {
-    maxent.UseSGD();
+    optim = new mltk::maxent::SGD();
+    optim->UseL1Reg(FLAGS_l1_reg);
   } else {
     LOG(FATAL) << "Invalid optimization method : " << FLAGS_optim_method;
   }
-  if (FLAGS_l1_reg > 0.0) {
-    maxent.UseL1Reg(FLAGS_l1_reg);
-  }
-  if (FLAGS_l2_reg > 0.0) {
-    maxent.UseL2Reg(FLAGS_l2_reg);
-  }
+
+  mltk::maxent::MaxEnt maxent(optim);
 
   LOG(INFO) << "Load training data from " << FLAGS_train_data_file;
   std::ifstream fin(FLAGS_train_data_file.c_str());
@@ -66,6 +69,8 @@ int main(int argc, char** argv) {
 
   LOG(INFO) << "Save model to " << FLAGS_model_file;
   maxent.SaveModel(FLAGS_model_file);
+
+  delete optim;
 
   return 0;
 }
