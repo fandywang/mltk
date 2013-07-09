@@ -21,11 +21,9 @@ using mltk::common::Instance;
 using mltk::common::MemInstance;
 using mltk::common::ModelData;
 
-const static double SGD_ITER = 50;  // the total number of iterater
-const static double SGD_ETA0 = 1;  // learning rate eta_0
-const static double SGD_ALPHA = 0.85;  // the constant for learning rate
-                                       // exponential delay.
-                                       // eta_k = eta_0 * alpha^(-k/N)
+const static double ALPHA = 0.85;  // the constant for learning rate
+                                   // exponential delay.
+                                   // eta_k = eta_0 * alpha^(-k / N)
 
 void SGD::EstimateParamater(const std::vector<Instance>& instances,
                             int32_t num_heldout,
@@ -42,8 +40,9 @@ void SGD::EstimateParamater(const std::vector<Instance>& instances,
 }
 
 void SGD::PerformSGD() {
-  assert(SGD_ALPHA < 1.0 && SGD_ALPHA > 0.0);
-  std::cerr << "eta0 = " << SGD_ETA0 << ", alpha = " << SGD_ALPHA << std::endl;
+  assert(ALPHA < 1.0 && ALPHA > 0.0);
+  std::cerr << "learning_rate = " << learning_rate_
+      << ", alpha = " << ALPHA << std::endl;
 
 
   std::vector<int32_t> instance_ids(train_data_.size());
@@ -55,7 +54,7 @@ void SGD::PerformSGD() {
   int32_t iter_sample = 0;  // the number of iter sample
   std::vector<double>* lambdas = model_data_->MutableLambdas();
 
-  for (int32_t iter = 0; iter < SGD_ITER; ++iter) {
+  for (int32_t iter = 0; iter < num_iter_; ++iter) {
     int32_t ncorrect = 0;
     double logl = 0.0;
 
@@ -72,9 +71,8 @@ void SGD::PerformSGD() {
       if (max_label == mem_instance.label_id()) { ++ncorrect; }
 
       // learning rate : exponential decay
-      const double eta = SGD_ETA0 *
-          pow(SGD_ALPHA,
-              static_cast<double>(iter_sample) / train_data_.size());
+      const double eta = learning_rate_ *
+          pow(ALPHA, static_cast<double>(iter_sample) / train_data_.size());
       u += eta * l1param;
 
       // update weight/lambdas according to current sampled instance

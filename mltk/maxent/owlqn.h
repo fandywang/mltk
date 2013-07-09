@@ -25,7 +25,7 @@ namespace maxent {
 
 class OWLQN : public Optimizer {
  public:
-  OWLQN() {}
+  OWLQN(int32_t num_iter = 300, int32_t m = 10) : num_iter_(num_iter), m_(m) {}
   virtual ~OWLQN() {}
 
   virtual void EstimateParamater(const std::vector<common::Instance>& instances,
@@ -33,7 +33,7 @@ class OWLQN : public Optimizer {
                                  common::ModelData* model_data);
 
  private:
-  std::vector<double> PerformOWLQN(const std::vector<double>& x0, double C);
+  std::vector<double> PerformOWLQN();
 
   double RegularizedFuncGrad(const double C,
                              const common::DoubleVector& x,
@@ -45,9 +45,9 @@ class OWLQN : public Optimizer {
 
   common::DoubleVector ApproximateHg(const int32_t iter,
                                      const common::DoubleVector& grad,
-                                     const common::DoubleVector s[],
-                                     const common::DoubleVector y[],
-                                     const double z[]);
+                                     const common::DoubleVector* s,
+                                     const common::DoubleVector* y,
+                                     const double* z);
 
   double ConstrainedLineSearch(double C,
                                const common::DoubleVector& x0,
@@ -56,6 +56,9 @@ class OWLQN : public Optimizer {
                                const common::DoubleVector& dx,
                                common::DoubleVector& x,
                                common::DoubleVector& grad1);
+
+  int32_t num_iter_;  // the total iterations
+  int32_t m_;
 };
 
 }  // namespace maxent

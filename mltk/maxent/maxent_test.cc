@@ -22,7 +22,7 @@ using mltk::maxent::SGD;
 const static std::string kModelFile = "maxent.model";
 
 TEST(MaxEnt, TrainUsingSGD) {
-  Optimizer* optim = new SGD();
+  Optimizer* optim = new SGD(50, 1);
   optim->UseL1Reg(0.1);
 
   MaxEnt maxent(optim);
@@ -74,7 +74,7 @@ TEST(MaxEnt, TrainUsingSGD) {
 }
 
 TEST(MaxEnt, TrainUsingOWLQN) {
-  Optimizer* optim = new OWLQN();
+  Optimizer* optim = new OWLQN(300, 10);
   optim->UseL1Reg(0.1);
 
   MaxEnt maxent(optim);
@@ -126,7 +126,7 @@ TEST(MaxEnt, TrainUsingOWLQN) {
 }
 
 TEST(MaxEnt, TrainUsingLBFGS) {
-  Optimizer* optim = new LBFGS();
+  Optimizer* optim = new LBFGS(300, 10);
   optim->UseL2Reg(0.1);
 
   MaxEnt maxent(optim);

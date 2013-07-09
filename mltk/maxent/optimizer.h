@@ -21,8 +21,9 @@ class Optimizer {
   virtual ~Optimizer() {}
 
   void UseL1Reg(double l1reg) { l1reg_ = l1reg; }
-  void UseL2Reg(double l2reg) { l2reg_ = l2reg_; }
+  void UseL2Reg(double l2reg) { l2reg_ = l2reg; }
 
+  // paramater estimation
   virtual void EstimateParamater(const std::vector<common::Instance>& instances,
                                  int32_t num_heldout,
                                  common::ModelData* model_data) = 0;
@@ -32,6 +33,8 @@ class Optimizer {
     train_data_.clear();
     heldout_data_.clear();
     model_data_ = NULL;
+    l1reg_ = 0.0;
+    l2reg_ = 0.0;
     empirical_expectation_.clear();
     model_expectation_.clear();
   }
@@ -40,15 +43,16 @@ class Optimizer {
                          int32_t num_heldout,
                          common::ModelData* model_data);
 
+  // Calculate empirical expection based on training data.
   void InitEmpiricalExpection();
 
   double FunctionGradient(const std::vector<double>& x,
                           std::vector<double>* grad);
 
-  // update E_p (f), formula: E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
+  // Update E_p (f), formula: E_p (f) = sum_x,y P1(x)P(y|x)f(x, y)
   double UpdateModelExpectation();
 
-  // calculate p(y|x)
+  // Calculate p(y|x)
   int32_t CalcConditionalProbability(const common::MemInstance& mem_instance,
                                      std::vector<double>* prob_dist) const;
   double CalcHeldoutLikelihood();

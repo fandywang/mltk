@@ -19,12 +19,10 @@ using mltk::common::DoubleVector;
 using mltk::common::Instance;
 using mltk::common::ModelData;
 
-const static int32_t OWLQN_M = 10;
 const static double LINE_SEARCH_ALPHA = 0.1;
 const static double LINE_SEARCH_BETA = 0.5;
 
 // stopping criteria
-const static int32_t OWLQN_MAX_ITER = 300;
 const static double MIN_GRAD_NORM = 0.0001;
 
 inline int32_t Sign(double x) {
@@ -50,32 +48,27 @@ void OWLQN::EstimateParamater(const std::vector<Instance>& instances,
 
   InitFromInstances(instances, num_heldout, model_data);
 
-  const std::vector<double> lambdas = model_data_->Lambdas();
-  assert(static_cast<int32_t>(lambdas.size()) == model_data_->NumFeatures());
-
-  std::vector<double> x0(model_data_->NumFeatures());
-  for (int32_t i = 0; i < model_data_->NumFeatures(); ++i) {
-    x0[i] = lambdas[i];
-  }
-
-  std::vector<double> x = PerformOWLQN(x0, l1reg_);
+  std::vector<double> x = PerformOWLQN();
   model_data_->UpdateLambdas(x);
 }
 
-std::vector<double> OWLQN::PerformOWLQN(const std::vector<double>& x0,
-                                         const double C) {
-  const size_t dim = x0.size();
+std::vector<double> OWLQN::PerformOWLQN() {
+  const std::vector<double> lambdas = model_data_->Lambdas();
+  assert(static_cast<int32_t>(lambdas.size()) == model_data_->NumFeatures());
+
+  std::vector<double> x0(lambdas.size());
+  for (int32_t i = 0; i < lambdas.size(); ++i) { x0[i] = lambdas[i]; }
+
   DoubleVector x(x0);
+  DoubleVector grad(lambdas.size());
+  double f = RegularizedFuncGrad(l1reg_, x, grad);
 
-  DoubleVector grad(dim), dx(dim);
-  double f = RegularizedFuncGrad(C, x, grad);
+  DoubleVector* s = new DoubleVector[m_];
+  DoubleVector* y = new DoubleVector[m_];
+  double* z = new double[m_];  // rho
 
-  DoubleVector s[OWLQN_M];
-  DoubleVector y[OWLQN_M];
-  double z[OWLQN_M];  // rho
-
-  for (int32_t iter = 0; iter < OWLQN_MAX_ITER; ++iter) {  // stopping criteria 1
-    DoubleVector pg = PseudoGradient(x, grad, C);
+  for (int32_t iter = 0; iter < num_iter_; ++iter) {  // stopping criteria 1
+    DoubleVector pg = PseudoGradient(x, grad, l1reg_);
 
     std::cerr << "iter = " << iter + 1
         << ", obj(err) = " << f
@@ -89,19 +82,22 @@ std::vector<double> OWLQN::PerformOWLQN(const std::vector<double>& x0,
     // stopping criteria 2
     if (sqrt(DotProduct(pg, pg)) < MIN_GRAD_NORM) { break; }
 
-    dx = -1 * ApproximateHg(iter, pg, s, y, z);
+    DoubleVector dx = -1 * ApproximateHg(iter, pg, s, y, z);
     if (DotProduct(dx, pg) >= 0) { dx.Project(-1 * pg); }
 
-    DoubleVector x1(dim), grad1(dim);
-    f = ConstrainedLineSearch(C, x, pg, f, dx, x1, grad1);
+    DoubleVector x1(lambdas.size()), grad1(lambdas.size());
+    f = ConstrainedLineSearch(l1reg_, x, pg, f, dx, x1, grad1);
 
-    s[iter % OWLQN_M] = x1 - x;
-    y[iter % OWLQN_M] = grad1 - grad;
-    z[iter % OWLQN_M] = 1.0 / DotProduct(y[iter % OWLQN_M], s[iter % OWLQN_M]);
+    s[iter % m_] = x1 - x;
+    y[iter % m_] = grad1 - grad;
+    z[iter % m_] = 1.0 / DotProduct(y[iter % m_], s[iter % m_]);
 
     x = x1;
     grad = grad1;
   }
+  delete[] s;
+  delete[] y;
+  delete[] z;
 
   return x.STLVector();
 }
@@ -143,33 +139,33 @@ DoubleVector OWLQN::PseudoGradient(const DoubleVector& x,
 
 DoubleVector OWLQN::ApproximateHg(const int32_t iter,
                                   const DoubleVector& grad,
-                                  const DoubleVector s[],
-                                  const DoubleVector y[],
-                                  const double z[]) {
+                                  const DoubleVector* s,
+                                  const DoubleVector* y,
+                                  const double* z) {
   int32_t offset, bound;
-  if (iter <= OWLQN_M) {
+  if (iter <= m_) {
     offset = 0;
     bound = iter;
   }
   else {
-    offset = iter - OWLQN_M;
-    bound = OWLQN_M;
+    offset = iter - m_;
+    bound = m_;
   }
 
   DoubleVector q = grad;
-  double alpha[OWLQN_M], beta[OWLQN_M];
+  double alpha[m_], beta[m_];
   for (int32_t i = bound - 1; i >= 0; --i) {
-    const int32_t j = (i + offset) % OWLQN_M;
+    const int32_t j = (i + offset) % m_;
     alpha[i] = z[j] * DotProduct(s[j], q);
     q += -alpha[i] * y[j];
   }
   if (iter > 0) {
-    const int32_t j = (iter - 1) % OWLQN_M;
+    const int32_t j = (iter - 1) % m_;
     const double gamma = ((1.0 / z[j]) / DotProduct(y[j], y[j]));
     q *= gamma;
   }
   for (int32_t i = 0; i <= bound - 1; ++i) {
-    const int32_t j = (i + offset) % OWLQN_M;
+    const int32_t j = (i + offset) % m_;
     beta[i] = z[j] * DotProduct(y[j], q);
     q += s[j] * (alpha[i] - beta[i]);
   }

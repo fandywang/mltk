@@ -25,7 +25,8 @@ namespace maxent {
 
 class SGD : public Optimizer {
  public:
-  SGD() {}
+  SGD(int32_t num_iter = 50, double learning_rate = 1)
+      : num_iter_(num_iter), learning_rate_(learning_rate) {}
   virtual ~SGD() {}
 
   virtual void EstimateParamater(const std::vector<common::Instance>& instances,
@@ -39,6 +40,9 @@ class SGD : public Optimizer {
                       const double u,
                       std::vector<double>* lambdas,
                       std::vector<double>& q);
+
+  int32_t num_iter_;  // the total iterations
+  double learning_rate_;  // learning rate
 };
 
 }  // namespace maxent

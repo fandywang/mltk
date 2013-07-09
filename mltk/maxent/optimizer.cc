@@ -23,6 +23,7 @@ bool Optimizer::InitFromInstances(const std::vector<Instance>& instances,
 
   // initialize model
   std::cerr << "initialize model data...";
+  assert(model_data != NULL);
   model_data_ = model_data;  // for convient
   model_data_->InitFromInstances(instances);
 
@@ -170,9 +171,8 @@ double Optimizer::UpdateModelExpectation() {
   }
 
   train_accuracy_ = static_cast<double>(ncorrect) / train_data_.size();
-  logl /= train_data_.size();
 
-  return logl;
+  return logl / train_data_.size();
 }
 
 double Optimizer::CalcHeldoutLikelihood() {
@@ -190,7 +190,7 @@ double Optimizer::CalcHeldoutLikelihood() {
 
   heldout_accuracy_ = static_cast<double>(ncorrect) / heldout_data_.size();
 
-  return logl /= heldout_data_.size();
+  return logl / heldout_data_.size();
 }
 
 }  // namespace maxent

@@ -19,12 +19,9 @@ using mltk::common::DoubleVector;
 using mltk::common::Instance;
 using mltk::common::ModelData;
 
-const static int32_t LBFGS_M = 10;
-const static double LINE_SEARCH_ALPHA = 0.1;
-const static double LINE_SEARCH_BETA = 0.5;
-
+const static double line_search_alpha_ = 0.1;
+const static double line_search_beta_ = 0.5;
 // stopping criteria
-const static int32_t LBFGS_MAX_ITER = 300;
 const static double MIN_GRAD_NORM = 0.0001;
 
 void LBFGS::EstimateParamater(const std::vector<Instance>& instances,
@@ -39,28 +36,26 @@ void LBFGS::EstimateParamater(const std::vector<Instance>& instances,
 
   InitFromInstances(instances, num_heldout, model_data);
 
-  const std::vector<double> lambdas = model_data_->Lambdas();
-  std::vector<double> x0(model_data_->NumFeatures());
-  for (int32_t i = 0; i < model_data_->NumFeatures(); ++i) {
-    x0[i] = lambdas[i];
-  }
-
-  std::vector<double> x = PerformLBFGS(x0);
+  std::vector<double> x = PerformLBFGS();
   model_data_->UpdateLambdas(x);
 }
 
-std::vector<double> LBFGS::PerformLBFGS(const std::vector<double>& x0) {
-  const size_t dim = x0.size();
-  DoubleVector x(x0);
-  DoubleVector grad(dim), dx(dim);
+std::vector<double> LBFGS::PerformLBFGS() {
+  const std::vector<double> lambdas = model_data_->Lambdas();
+  assert(static_cast<int32_t>(lambdas.size()) == model_data_->NumFeatures());
 
+  std::vector<double> x0(lambdas.size());
+  for (int32_t i = 0; i < lambdas.size(); ++i) { x0[i] = lambdas[i]; }
+
+  DoubleVector x(x0);
+  DoubleVector grad(lambdas.size());
   double f = FunctionGradient(x.STLVector(), &(grad.STLVector()));
 
-  DoubleVector s[LBFGS_M];
-  DoubleVector y[LBFGS_M];
-  double z[LBFGS_M];  // rho
+  DoubleVector* s = new DoubleVector[m_];
+  DoubleVector* y = new DoubleVector[m_];
+  double* z = new double[m_];  // rho
 
-  for (int32_t iter = 0; iter < LBFGS_MAX_ITER; ++iter) {  // stopping criteria 1
+  for (int32_t iter = 0; iter < num_iter_; ++iter) {  // stopping criteria 1
     std::cerr << "iter = " << iter + 1
         << ", obj(err) = " << f
         << ", accuracy = " << train_accuracy_ << std::endl;
@@ -74,50 +69,52 @@ std::vector<double> LBFGS::PerformLBFGS(const std::vector<double>& x0) {
     // stopping criteria 2
     if (sqrt(DotProduct(grad, grad)) < MIN_GRAD_NORM) { break; }
 
-    dx = -1 * ApproximateHg(iter, grad, s, y, z);
+    DoubleVector dx = -1 * ApproximateHg(iter, grad, s, y, z);
 
-    DoubleVector x1(dim), grad1(dim);
+    DoubleVector x1(lambdas.size()), grad1(lambdas.size());
     f = BacktrackingLineSearch(x, grad, f, dx, &x1, &grad1);
 
-    s[iter % LBFGS_M] = x1 - x;
-    y[iter % LBFGS_M] = grad1 - grad;
-    z[iter % LBFGS_M] = 1.0 / DotProduct(y[iter % LBFGS_M], s[iter % LBFGS_M]);
+    s[iter % m_] = x1 - x;
+    y[iter % m_] = grad1 - grad;
+    z[iter % m_] = 1.0 / DotProduct(y[iter % m_], s[iter % m_]);
     x = x1;
     grad = grad1;
   }
+  delete[] s;
+  delete[] y;
+  delete[] z;
 
   return x.STLVector();
 }
 
 DoubleVector LBFGS::ApproximateHg(const int32_t iter,
                                   const DoubleVector& grad,
-                                  const DoubleVector s[],
-                                  const DoubleVector y[],
-                                  const double z[]) {
+                                  const DoubleVector* s,
+                                  const DoubleVector* y,
+                                  const double* z) {
   int32_t offset, bound;
-  if (iter <= LBFGS_M) {
+  if (iter <= m_) {
     offset = 0;
     bound = iter;
-  }
-  else {
-    offset = iter - LBFGS_M;
-    bound = LBFGS_M;
+  } else {
+    offset = iter - m_;
+    bound = m_;
   }
 
   DoubleVector q = grad;
-  double alpha[LBFGS_M], beta[LBFGS_M];
+  double alpha[m_], beta[m_];
   for (int32_t i = bound - 1; i >= 0; --i) {
-    const int32_t j = (i + offset) % LBFGS_M;
+    const int32_t j = (i + offset) % m_;
     alpha[i] = z[j] * DotProduct(s[j], q);
     q += -alpha[i] * y[j];
   }
   if (iter > 0) {
-    const int32_t j = (iter - 1) % LBFGS_M;
+    const int32_t j = (iter - 1) % m_;
     const double gamma = ((1.0 / z[j]) / DotProduct(y[j], y[j]));
     q *= gamma;
   }
   for (int32_t i = 0; i <= bound - 1; ++i) {
-    const int32_t j = (i + offset) % LBFGS_M;
+    const int32_t j = (i + offset) % m_;
     beta[i] = z[j] * DotProduct(y[j], q);
     q += s[j] * (alpha[i] - beta[i]);
   }
@@ -131,14 +128,14 @@ double LBFGS::BacktrackingLineSearch(const DoubleVector& x0,
                                      const DoubleVector& dx,
                                      DoubleVector* x,
                                      DoubleVector* grad1) {
-  double t = 1.0 / LINE_SEARCH_BETA;
+  double t = 1.0 / line_search_beta_;
   double f;
 
   do {
-    t *= LINE_SEARCH_BETA;
+    t *= line_search_beta_;
     *x = x0 + t * dx;
     f = FunctionGradient(x->STLVector(), &(grad1->STLVector()));
-  } while (f > f0 + LINE_SEARCH_ALPHA * t * DotProduct(dx, grad0));
+  } while (f > f0 + line_search_alpha_ * t * DotProduct(dx, grad0));
 
   return f;
 }

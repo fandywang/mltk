@@ -25,7 +25,7 @@ namespace maxent {
 
 class LBFGS : public Optimizer {
  public:
-  LBFGS() {}
+  LBFGS(int32_t num_iter = 300, int32_t m = 10) : num_iter_(num_iter), m_(m) {}
   virtual ~LBFGS() {}
 
   virtual void EstimateParamater(const std::vector<common::Instance>& instances,
@@ -33,13 +33,13 @@ class LBFGS : public Optimizer {
                                  common::ModelData* model_data);
 
  private:
-  std::vector<double> PerformLBFGS(const std::vector<double>& x0);
+  std::vector<double> PerformLBFGS();
 
   common::DoubleVector ApproximateHg(const int32_t iter,
                                      const common::DoubleVector& grad,
-                                     const common::DoubleVector s[],
-                                     const common::DoubleVector y[],
-                                     const double z[]);
+                                     const common::DoubleVector* s,
+                                     const common::DoubleVector* y,
+                                     const double* z);
 
   double BacktrackingLineSearch(const common::DoubleVector& x0,
                                 const common::DoubleVector& grad0,
@@ -47,6 +47,9 @@ class LBFGS : public Optimizer {
                                 const common::DoubleVector& dx,
                                 common::DoubleVector* x,
                                 common::DoubleVector* grad1);
+
+  int32_t num_iter_;  // the total iterations
+  int32_t m_;
 };
 
 }  // namespace maxent
