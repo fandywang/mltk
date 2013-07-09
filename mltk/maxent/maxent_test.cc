@@ -49,7 +49,7 @@ TEST(MaxEnt, TrainUsingSGD) {
   instances.push_back(instance3);
   instances.push_back(instance3);
 
-  ASSERT_TRUE(maxent.Train(instances));
+  ASSERT_TRUE(maxent.Train(instances, 0, 0));
 
   EXPECT_EQ(2, maxent.NumClasses());
 
@@ -101,7 +101,7 @@ TEST(MaxEnt, TrainUsingOWLQN) {
   instances.push_back(instance3);
   instances.push_back(instance3);
 
-  ASSERT_TRUE(maxent.Train(instances));
+  ASSERT_TRUE(maxent.Train(instances, 0, 0));
 
   EXPECT_EQ(2, maxent.NumClasses());
 
@@ -153,7 +153,7 @@ TEST(MaxEnt, TrainUsingLBFGS) {
   instances.push_back(instance3);
   instances.push_back(instance3);
 
-  ASSERT_TRUE(maxent.Train(instances));
+  ASSERT_TRUE(maxent.Train(instances, 0, 0));
 
   EXPECT_EQ(2, maxent.NumClasses());
 

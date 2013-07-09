@@ -36,7 +36,8 @@ class ModelData {
   bool Save(const std::string& filename) const;
 
   // Initialize with instances.
-  void InitFromInstances(const std::vector<Instance>& instances);
+  void InitFromInstances(const std::vector<Instance>& instances,
+                         int32_t feature_cutoff);
 
   void Clear() {
     label_vocab_.Clear();

@@ -33,6 +33,7 @@ inline int32_t Sign(double x) {
 
 void OWLQN::EstimateParamater(const std::vector<Instance>& instances,
                               int32_t num_heldout,
+                              int32_t feature_cutoff,
                               ModelData* model_data) {
   // NOTE(l1reg_ > 0): The LBFGS limited-memory quasi-Newton method is the
   // algorithm of choice for optimizing the parameters of large-scale
@@ -46,7 +47,7 @@ void OWLQN::EstimateParamater(const std::vector<Instance>& instances,
     exit(1);
   }
 
-  InitFromInstances(instances, num_heldout, model_data);
+  InitFromInstances(instances, num_heldout, feature_cutoff, model_data);
 
   std::vector<double> x = PerformOWLQN();
   model_data_->UpdateLambdas(x);

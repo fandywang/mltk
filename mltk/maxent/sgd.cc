@@ -27,6 +27,7 @@ const static double ALPHA = 0.85;  // the constant for learning rate
 
 void SGD::EstimateParamater(const std::vector<Instance>& instances,
                             int32_t num_heldout,
+                            int32_t feature_cutoff,
                             ModelData* model_data) {
   std::cerr << "performing SGD" << std::endl;
   if (l2reg_ > 0) {
@@ -35,7 +36,7 @@ void SGD::EstimateParamater(const std::vector<Instance>& instances,
     exit(1);
   }
 
-  InitFromInstances(instances, num_heldout, model_data);
+  InitFromInstances(instances, num_heldout, feature_cutoff, model_data);
   PerformSGD();
 }
 

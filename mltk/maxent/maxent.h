@@ -169,7 +169,8 @@ class MaxEnt {
 
   // Training
   bool Train(const std::vector<common::Instance>& instances,
-             int32_t num_heldout = 0);
+             int32_t num_heldout = 0,
+             int32_t feature_cutoff = 0);
 
   // Predict
   std::vector<double> Predict(common::Instance* instance) const;

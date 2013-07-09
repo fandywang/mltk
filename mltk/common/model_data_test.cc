@@ -51,7 +51,7 @@ TEST(ModelData, InitFromInstances) {
   instances.push_back(instance2);
 
   ModelData model_data;
-  model_data.InitFromInstances(instances);
+  model_data.InitFromInstances(instances, 0);
   EXPECT_EQ(2, model_data.NumClasses());
   EXPECT_EQ(6, model_data.NumFeatures());
   EXPECT_EQ(0, model_data.NumActiveFeatures());

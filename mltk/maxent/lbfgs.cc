@@ -26,6 +26,7 @@ const static double MIN_GRAD_NORM = 0.0001;
 
 void LBFGS::EstimateParamater(const std::vector<Instance>& instances,
                               int32_t num_heldout,
+                              int32_t feature_cutoff,
                               ModelData* model_data) {
   std::cerr << "performing LBFGS" << std::endl;
   if (l1reg_ > 0) {
@@ -34,7 +35,7 @@ void LBFGS::EstimateParamater(const std::vector<Instance>& instances,
     exit(1);
   }
 
-  InitFromInstances(instances, num_heldout, model_data);
+  InitFromInstances(instances, num_heldout, feature_cutoff, model_data);
 
   std::vector<double> x = PerformLBFGS();
   model_data_->UpdateLambdas(x);

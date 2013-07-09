@@ -30,13 +30,17 @@ bool MaxEnt::SaveModel(const std::string& filename) const {
 }
 
 bool MaxEnt::Train(const std::vector<Instance>& instances,
-                   int32_t num_heldout) {
+                   int32_t num_heldout,
+                   int32_t feature_cutoff) {
   // parameter estimation
   std::cerr << "parameter estimation ..." << std::endl;
   model_data_.Clear();
   assert(optimizer_ != NULL);
 
-  optimizer_->EstimateParamater(instances, num_heldout, &model_data_);
+  optimizer_->EstimateParamater(instances,
+                                num_heldout,
+                                feature_cutoff,
+                                &model_data_);
 
   // count the number of active features
   std::cerr << "number of active features = " << model_data_.NumActiveFeatures()

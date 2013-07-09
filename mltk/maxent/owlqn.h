@@ -30,6 +30,7 @@ class OWLQN : public Optimizer {
 
   virtual void EstimateParamater(const std::vector<common::Instance>& instances,
                                  int32_t num_heldout,
+                                 int32_t feature_cutoff,
                                  common::ModelData* model_data);
 
  private:

@@ -29,6 +29,7 @@ DEFINE_int32(sgd_learning_rate, 1.0, "the learning rate of SGD.");
 DEFINE_double(l1_reg, 0.0, "the L1 regularization.");
 DEFINE_double(l2_reg, 0.0, "the L2 regularization.");
 DEFINE_int32(num_heldout, 0, "the number of heldout data.");
+DEFINE_int32(feature_cutoff, 1, "the minmum frequency of feature.");
 
 int main(int argc, char** argv) {
   ::google::ParseCommandLineFlags(&argc, &argv, true);
@@ -70,7 +71,7 @@ int main(int argc, char** argv) {
   fin.close();
 
   LOG(INFO) << "MaxEnt model training.";
-  maxent.Train(instances, FLAGS_num_heldout);
+  maxent.Train(instances, FLAGS_num_heldout, FLAGS_feature_cutoff);
 
   LOG(INFO) << "Save model to " << FLAGS_model_file;
   maxent.SaveModel(FLAGS_model_file);

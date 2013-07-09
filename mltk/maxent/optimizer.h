@@ -26,6 +26,7 @@ class Optimizer {
   // paramater estimation
   virtual void EstimateParamater(const std::vector<common::Instance>& instances,
                                  int32_t num_heldout,
+                                 int32_t feature_cutoff,
                                  common::ModelData* model_data) = 0;
 
  protected:
@@ -41,6 +42,7 @@ class Optimizer {
 
   bool InitFromInstances(const std::vector<common::Instance>& instances,
                          int32_t num_heldout,
+                         int32_t feature_cutoff,
                          common::ModelData* model_data);
 
   // Calculate empirical expection based on training data.

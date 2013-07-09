@@ -78,8 +78,24 @@ bool ModelData::Save(const std::string& filename) const {
   return true;
 }
 
-void ModelData::InitFromInstances(const std::vector<Instance>& instances) {
+void ModelData::InitFromInstances(const std::vector<Instance>& instances,
+                                  int32_t feature_cutoff) {
   Clear();
+
+  std::map<uint32_t, int32_t> feature_counter;
+  for (size_t n = 0; n < instances.size(); ++n) {
+    int32_t label_id = label_vocab_.Put(instances[n].label());
+    if (label_id > Feature::MAX_LABEL_TYPES) {
+      std::cerr << "error: too many types of labels." << std::endl;
+      exit(1);
+    }
+
+    for (Instance::ConstIterator citer(instances[n]);
+         !citer.Done(); citer.Next()) {
+      int32_t feature_name_id = featurename_vocab_.Put(citer.FeatureName());
+      feature_counter[Feature(label_id, feature_name_id).Body()]++;
+    }
+  }
 
   for (size_t n = 0; n < instances.size(); ++n) {
     int32_t label_id = label_vocab_.Put(instances[n].label());
@@ -91,7 +107,10 @@ void ModelData::InitFromInstances(const std::vector<Instance>& instances) {
     for (Instance::ConstIterator citer(instances[n]);
          !citer.Done(); citer.Next()) {
       int32_t feature_name_id = featurename_vocab_.Put(citer.FeatureName());
-      feature_vocab_.Put(Feature(label_id, feature_name_id));
+      Feature feature(label_id, feature_name_id);
+      if (feature_counter[feature.Body()] > feature_cutoff) {
+        feature_vocab_.Put(feature);
+      }
     }
   }
 

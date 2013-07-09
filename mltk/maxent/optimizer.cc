@@ -18,6 +18,7 @@ using mltk::common::ModelData;
 
 bool Optimizer::InitFromInstances(const std::vector<Instance>& instances,
                                   int32_t num_heldout,
+                                  int32_t feature_cutoff,
                                   ModelData* model_data) {
   std::cerr << "preparing for estimation..." << std::endl;
 
@@ -25,7 +26,7 @@ bool Optimizer::InitFromInstances(const std::vector<Instance>& instances,
   std::cerr << "initialize model data...";
   assert(model_data != NULL);
   model_data_ = model_data;  // for convient
-  model_data_->InitFromInstances(instances);
+  model_data_->InitFromInstances(instances, feature_cutoff);
 
   // mapping common::Instance to common::MemInstance
   for (size_t n = 0; n < instances.size(); ++n) {
