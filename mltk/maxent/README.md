@@ -2,6 +2,43 @@ MLTK.MaxEnt
 ==========================
 Maximum Entropy Modelling.
 
+### Features
+1. supporting real-valued features
+2. supporting three effective parameter estimation methods, including SGD, LBFGF and OWLQN
+3. supporting a simple feature selection (feature cutoff)
+
+Usage
+---------------------
+### 1. Data format
+The corpus for training/test the model have the line format as follows:
+
+    [instance1]
+    [instance2]
+    ...
+    [instanceM]
+
+in which each line is one instance. [instancei] is the ith instane of the dataset that consists of a list of Ni features.
+
+    [instancei] = class\t[feature1:value1]\t[feature2:value2]\t...\t[featureNi:valueNi]
+
+in which all [featurej:valuej] &lt; j=1...Ni&gt; are feature-value pairs and they are separated by the tab character.
+
+### 2. Training
+#### Command line
+
+        Usage: ./bin/maxent_trainer [options].
+        --helpshort  show this help message and exit
+        --train_data_file (the filename of training data.) type: string default: "" 
+        --model_file (the filename of maxent model.) type: string default: ""
+        --optim_method (the optimization method, LBFGS, OWLQN, or SGD.) type: string default: "LBFGS"
+        --l1_reg (the L1 regularization.) type: double default: 0 
+        --l2_reg (the L2 regularization.) type: double default: 0 
+        --num_iterations (the total iterations.) type: int32 default: 100
+        --newton_m (the cache size for newton methods, OWLQN and LBFGS.) type: int32  default: 10
+        --sgd_learning_rate (the learning rate of SGD.) type: int32 default: 1
+        --num_heldout (the number of heldout data.) type: int32 default: 0
+        --feature_cutoff (the minmum frequency of feature.) type: int32 default: 1 
+
 References
 ---------------------
 1. 李航. [《统计学习方法》](http://book.douban.com/subject/10590856/). 2012.

@@ -6,19 +6,27 @@ Depends
 ----------------------
 1. [gflags](https://code.google.com/p/gflags/) - Commandline flags module for C++  
 Install to $HOME/thirdparty/gflags  
-    ./configure --prefix=$HOME/thirdparty/gflags  
-    make & make install  
-    export GFLAGS_ROOT="$HOME/thirdparty/gflags"  
+
+
+       ./configure --prefix=$HOME/thirdparty/gflags  
+       make & make install  
+       export GFLAGS_ROOT="$HOME/thirdparty/gflags"  
+
 2. [glog](https://code.google.com/p/google-glog/) - Logging library for C++  
 Install to $HOME/thirdparty/glog  
-    ./configure --prefix=$HOME/thirdparty/glog --with-gflags=$HOME/thirdparty/gflags  
-    make & make install  
-    export GLOG_ROOT="$HOME/thirdparty/glog"  
+
+
+      ./configure --prefix=$HOME/thirdparty/glog --with-gflags=$HOME/thirdparty/gflags  
+      make & make install  
+      export GLOG_ROOT="$HOME/thirdparty/glog"  
+
 3. [gtest](https://code.google.com/p/googletest/) - Google C++ Testing Framework  
-Install to $HOME/thirdparty/gtest  
-    ./conifgure --prefix=$HOME/thirdparty/gtest  
-    make & make install  
-    export GTEST_ROOT="$HOME/thirdparty/gtest"  
+Install to $HOME/thirdparty/gtest
+
+
+      ./conifgure --prefix=$HOME/thirdparty/gtest  
+      make & make install  
+      export GTEST_ROOT="$HOME/thirdparty/gtest"  
 
 4. [toft](https://github.com/chen3feng/toft) - C++ Base Library  
 Has been integrated into MLTK as [common](https://github.com/fandywang/mltk/tree/master/common) library.
