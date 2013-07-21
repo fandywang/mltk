@@ -2,7 +2,7 @@
 SET(LIBRARY_OUTPUT_PATH ${MLTK_SOURCE_DIR}/lib)
 SET(EXECUTABLE_OUTPUT_PATH ${MLTK_SOURCE_DIR}/bin/mltk/common)
 
-SET(SRC_LIST model_data.cc)
+SET(SRC_LIST model_data.cc city.cc)
 
 ADD_LIBRARY(mltk_common SHARED ${SRC_LIST})
 SET_TARGET_PROPERTIES(mltk_common PROPERTIES CLEAN_DIRECT_OUTPUT 1)
@@ -18,7 +18,7 @@ IF (test)
     ADD_EXECUTABLE(common_test
       double_vector_test.cc feature_test.cc feature_vocabulary_test.cc
       vocabulary_test.cc instance_test.cc mem_instance_test.cc
-      model_data_test.cc logging_test.cc)
+      model_data_test.cc logging_test.cc string_algorithm_test.cc)
     TARGET_LINK_LIBRARIES(common_test mltk_common gtest gtest_main)
     TARGET_LINK_LIBRARIES(common_test ${CMAKE_THREAD_LIBS_INIT})
 
