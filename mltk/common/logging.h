@@ -1,6 +1,9 @@
 // Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
-//
+// 
+// Copy and modified from Google's plda (https://code.google.com/p/plda/).                                    
+// plda/src/common.h
+// 
 // The log facility, which makes it easy to leave of trace of your
 // program.  The logs are classified according to their severity
 // levels.  Logs of the level FATAL will cause a segmentation fault,
