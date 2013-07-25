@@ -8,13 +8,13 @@ Please use the github issue tracker for python-sparselda at:
 https://github.com/fandywang/mltk/tree/master/mltk/lda/python.
 
 ## Members
-* [wangkuiyi](https://github.com/wangkuiyi)
-* [xueminzhao](https://github.com/xmzhao)
-* [richardsun](https://github.com/richardsun)
-* [yhcharles](https://github.com/yhcharles)
-* [fandywang](https://github.com/fandywang)
-* [zhihuijin](https://github.com/zhihuijin)
-* [ubiwang](https://github.com/ubiwang)
+* [Yi Wang](https://github.com/wangkuiyi)
+* [Xuemin Zhao](https://github.com/xmzhao)
+* [Zhenlong Sun](https://github.com/richardsun)
+* [Hao Yan](https://github.com/yhcharles)
+* [Lifeng Wang](https://github.com/fandywang)
+* [Zhihui Jin](https://github.com/zhihuijin)
+* [Liubin Wang](https://github.com/ubiwang)
 
 ## Usage
 ================
@@ -130,7 +130,7 @@ Instead of manual evaluation, we want to evaluate topics quality automatically, 
 
 ## Credit
 1. python-sparselda is mainly inspired by Yi Wang's [PLDA](http://plda.googlecode.com/files/aaim.pdf) and Limin Yao's [SparseLDA](https://people.cs.umass.edu/~mimno/papers/fast-topic-model.pdf).
-2. The code design comes from team work.
+2. The code design comes from our team's work, especially thanks to Yi Wang and Xuemin Zhao's leadership.
 
 ## References
 ================
