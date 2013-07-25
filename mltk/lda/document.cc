@@ -27,13 +27,13 @@ bool Document::ParseFromTokens(const std::string& text,
     int32_t word_id = vocab.Id(tokens[i]);
     if (word_id != -1) {
       int32_t topic = static_cast<int32_t>(
-          rand() / static_cast<double>(RAND_MAX) * doc_topic_histogram_.size());
+          rand() / static_cast<double>(RAND_MAX) * doc_topic_dist_.size());
       words_.push_back(Word(word_id, topic));
     }
   }
 
   for (WordOccurrenceIterator iter(this); !iter.Done(); iter.Next()) {
-    ++doc_topic_histogram_[iter.Topic()];
+    ++doc_topic_dist_[iter.Topic()];
   }
 
   return true;
@@ -49,9 +49,9 @@ std::string Document::DebugString() const {
     str.append(" ");
   }
   str.append("####");
-  for (size_t i = 0; i < doc_topic_histogram_.size(); ++i) {
+  for (size_t i = 0; i < doc_topic_dist_.size(); ++i) {
     char buf[100];
-    snprintf(buf, sizeof(buf), "%ld %lld", i, doc_topic_histogram_[i]);
+    snprintf(buf, sizeof(buf), "%ld %lld", i, doc_topic_dist_[i]);
     str.append(buf);
     str.append(" ");
   }

@@ -1,6 +1,9 @@
 // Copyright (c) 2013 MLTK project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
 //
+// Copy and Modify from 'http://www.nactem.ac.uk/tsuruoka/maxent/'.
+// maxent.h
+//
 // The Feature class.
 
 #ifndef MLTK_COMMON_FEATURE_H_

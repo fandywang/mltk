@@ -1,5 +1,8 @@
 // Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
+//
+// Copy and Modify from 'http://www.nactem.ac.uk/tsuruoka/maxent/'.
+// lbfgs.cc
 
 #include "mltk/maxent/lbfgs.h"
 

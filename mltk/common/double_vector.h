@@ -1,6 +1,9 @@
 // Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
 //
+// Copy and Modify from 'http://www.nactem.ac.uk/tsuruoka/maxent/'.
+// mathvec.h
+//
 // STL DoubleVector Warapper and its utils.
 
 #ifndef MLTK_COMMON_DOUBLE_VECTOR_H_

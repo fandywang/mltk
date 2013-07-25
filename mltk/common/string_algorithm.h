@@ -1,8 +1,8 @@
 // Copyright (c) 2013 MLTK Project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
 
-#ifndef MLTK_COMMON_STRING_TOKENIZER_H_
-#define MLTK_COMMON_STRING_TOKENIZER_H_
+#ifndef MLTK_COMMON_STRING_ALGORITHM_H_
+#define MLTK_COMMON_STRING_ALGORITHM_H_
 
 #include <string>
 #include <vector>
@@ -28,5 +28,5 @@ void SplitString(const std::string& str,
   }
 }
 
-#endif  // MLTK_COMMON_STRING_TOKENIZER_H_
+#endif  // MLTK_COMMON_STRING_ALGORITHM_H_
 

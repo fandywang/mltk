@@ -6,7 +6,7 @@
 // Processing.
 //
 // Specifically, MaxEnt is mainly reconstructed and optimizated based on
-// 'http://www-tsujii.is.s.u-tokyo.ac.jp/~tsuruoka/maxent/', yet anothor simple
+// 'http://www.nactem.ac.uk/tsuruoka/maxent/', yet anothor simple
 // C++ library for maximum entropy classification.
 //
 // Maximum Entropy Principle:
