@@ -2,10 +2,19 @@
 ================
 python-sparselda is a Latent Dirichlet Allocation(LDA) topic modeling package based on SparseLDA Gibbs Sampling inference algorithm, and written in Python 2.6 or newer, Python 3.0 or newer excluded.
 
-Frankly, python-sparselda is just a mini project, we hope it can help you better understand the standard LDA and SparseLDA algorithms. RTFSC for more details. Have fun.
+Frankly, python-sparselda is just a mini-project, we hope it can help you better understand the standard LDA and SparseLDA algorithms. RTFSC for more details. Have fun.
 
 Please use the github issue tracker for python-sparselda at:
-https://github.com/fandywang/python-sparselda/issues
+https://github.com/fandywang/mltk/tree/master/mltk/lda/python.
+
+## Members
+* [wangkuiyi](https://github.com/wangkuiyi)
+* [xueminzhao](https://github.com/xmzhao)
+* [richardsun](https://github.com/richardsun)
+* [yhcharles](https://github.com/yhcharles)
+* [fandywang](https://github.com/fandywang)
+* [zhihuijin](https://github.com/zhihuijin)
+* [ubiwang](https://github.com/ubiwang)
 
 ## Usage
 ================
@@ -38,15 +47,15 @@ python-sparselda serialize and persistent store the lda model and checkpoint bas
     --num_topics=NUM_TOPICS
             the num of topics.
     --topic_prior=TOPIC_PRIOR
-            the topic prior alpha.
+            the topic prior alpha (50 / num_topics).
     --word_prior=WORD_PRIOR
-            the word prior beta.
+            the word prior beta (0.01).
     --total_iterations=TOTAL_ITERATIONS
             the total iteration.
     --model_dir=MODEL_DIR
             the model directory.
     --save_model_interval=SAVE_MODEL_INTERVAL
-            the interval to save lda model.
+            the interval iterations to save lda model.
     --topic_word_accumulated_prob_threshold=TOPIC_WORD_ACCUMULATED_PROB_THRESHOLD
             the accumulated_prob_threshold of topic top words.
     --save_checkpoint_interval=SAVE_CHECKPOINT_INTERVAL
@@ -116,8 +125,12 @@ Instead of manual evaluation, we want to evaluate topics quality automatically, 
 ================
 1. Hyperparameters optimization.
 2. Memory optimization.
-3. More experiments.
+3. Performance optimization, such as using NumPy.
 4. Data and model parallelization.
+
+## Credit
+1. python-sparselda is mainly inspired by Yi Wang's [PLDA](http://plda.googlecode.com/files/aaim.pdf) and Limin Yao's [SparseLDA](https://people.cs.umass.edu/~mimno/papers/fast-topic-model.pdf).
+2. The code design comes from team work.
 
 ## References
 ================
@@ -125,11 +138,11 @@ Instead of manual evaluation, we want to evaluate topics quality automatically, 
 2. Gregor Heinrich. [Parameter estimation for text analysis](http://www.arbylon.net/publications/text-est.pdf). Technical Note, 2004.
 3. Griﬃths, T. L., & Steyvers, M. [Finding scientiﬁc topics](http://www.pnas.org/content/101/suppl.1/5228.full.pdf). Proceedings of the National Academy of Sciences(PNAS), 2004.
 4. I. Porteous, D. Newman, A. Ihler, A. Asuncion, P. Smyth, and M. Welling. [Fast collapsed Gibbs sampling for latent Dirichlet allocation](http://www.ics.uci.edu/~asuncion/pubs/KDD_08.pdf). In SIGKDD, 2008.
-5. Limin Yao, David Mimno, Andrew McCallum. [Efficient methods for topic model inference on streaming document collections](https://www.cs.umass.edu/~mimno/papers/fast-topic-model.pdf), In SIGKDD, 2009.
+5. Limin Yao, David Mimno, Andrew McCallum. [Efficient methods for topic model inference on streaming document collections](https://people.cs.umass.edu/~mimno/papers/fast-topic-model.pdf), In SIGKDD, 2009.
 6. Newman et al. [Distributed Inference for Latent Dirichlet Allocation](http://www.csee.ogi.edu/~zak/cs506-pslc/dist_lda.pdf), NIPS 2007.
-7. X. Wei, W. Bruce Croft. [LDA-based document models for ad hoc retrieval](http://www.bradblock.com/LDA_Based_Document_Models_for_Ad_hoc_Retrieval.pdf). In Proc. SIGIR. 2006.
 7. Rickjin, [LDA 数学八卦](http://vdisk.weibo.com/s/q0sGh/1360334108?utm_source=weibolife). Technical Note, 2013.
-8. Yi Wang, Hongjie Bai, Matt Stanton, Wen-Yen Chen, and Edward Y. Chang. [PLDA: Parallel Latent Dirichlet Allocation for Large-scale Applications](http://plda.googlecode.com/files/aaim.pdf). AAIM 2009.
+8. X. Wei, W. Bruce Croft. [LDA-based document models for ad hoc retrieval](http://www.bradblock.com/LDA_Based_Document_Models_for_Ad_hoc_Retrieval.pdf). In Proc. SIGIR. 2006.
+9. Yi Wang, Hongjie Bai, Matt Stanton, Wen-Yen Chen, and Edward Y. Chang. [PLDA: Parallel Latent Dirichlet Allocation for Large-scale Applications](http://plda.googlecode.com/files/aaim.pdf). AAIM 2009.
 
 ## Links
 ===============
