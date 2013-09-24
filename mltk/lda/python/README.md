@@ -125,8 +125,7 @@ Instead of manual evaluation, we want to evaluate topics quality automatically, 
 ================
 1. Hyperparameters optimization.
 2. Memory optimization.
-3. Performance optimization, such as using NumPy.
-4. Data and model parallelization.
+3. Data and model parallelization.
 
 ## Credit
 1. python-sparselda is mainly inspired by Yi Wang's [PLDA](http://plda.googlecode.com/files/aaim.pdf) and Limin Yao's [SparseLDA](https://people.cs.umass.edu/~mimno/papers/fast-topic-model.pdf).
