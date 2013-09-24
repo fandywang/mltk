@@ -3,7 +3,7 @@ package lda;
 // Copyright(c) 2013 python-sparselda project.
 // Author: Lifeng Wang (ofandywang@gmail.com)
 
-// Using Google Protocal Buffers (protobuf) to serialize the sparselda model.
+// Using Google Protocal Buffers (protobuf) to serialize corpus and sparselda model.
 //
 // See https://developers.google.com/protocol-buffers/docs/pythontutorial for
 // more details.
@@ -23,23 +23,23 @@ message NonZero {
 }
 
 // the sparse topic histogram
-message SparseTopicHistogram {
+message SparseTopicHistogramPB {
     repeated NonZero non_zeros = 1;
 }
 
 // N(w|z)
-message WordTopicHistogram {
+message WordTopicHistogramPB {
     optional int32 word = 1;
-    optional SparseTopicHistogram sparse_topic_hist = 2;
+    optional SparseTopicHistogramPB sparse_topic_hist = 2;
 }
 
 // N(z), the dense topic histogram.
-message GlobalTopicHistogram {
+message GlobalTopicHistogramPB {
     repeated int64 topic_counts = 1;
 }
 
 // Dirichlet prior
-message HyperParams {
+message HyperParamsPB {
     optional double topic_prior = 1;
     optional double word_prior = 2;
 }

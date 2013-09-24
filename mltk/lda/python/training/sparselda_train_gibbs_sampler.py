@@ -3,20 +3,9 @@
 
 # Copyright(c) 2013 python-sparselda project.
 # Author: Lifeng Wang (ofandywang@gmail.com)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 import logging
+import numpy as np
 import os
 import random
 import sys
@@ -31,15 +20,16 @@ from common.vocabulary import Vocabulary
 
 class SparseLDATrainGibbsSampler(object):
     """SparseLDATrainGibbsSampler implements the SparseLDA gibbs sampling
-    training algorithm.  In gibbs sampling formula:
+    training algorithm.
 
-     (0) p(z|w) --> p(z|d) * p(w|z)
-                --> (alpha(z) + N(z|d)) * p(w|z)
-                 =  (alpha(z) + N(z|d)) * p(w|z) *
-                    (beta + N(w|z)) / (beta * |V| + N(z))
-                 =  alpha(z) * beta / (beta * |V| + N(z)) +
-                    N(z|d) * beta / (beta * |V| + N(z)) +
-                    (alpha(z) + N(z|d)) * N(w|z) / (beta * |V| + N(z))
+    In lda formula:
+     (0) p(z|w)  = p(z|d) * p(w|z)
+                 = (alpha(z) + N(z|d)) * p(w|z)
+                 = (alpha(z) + N(z|d)) *
+                   (beta + N(w|z)) / (beta * |V| + N(z))
+                 = alpha(z) * beta / (beta * |V| + N(z)) +
+                   N(z|d) * beta / (beta * |V| + N(z)) +
+                   (alpha(z) + N(z|d)) * N(w|z) / (beta * |V| + N(z))
 
      (1) s(z) = alpha(z) * beta / (beta * |V| + N(z))
      (2) r(z, d) = N(z|d) * beta / (beta * |V| + N(z))
@@ -80,18 +70,18 @@ class SparseLDATrainGibbsSampler(object):
         self.documents = []  # item fmt: common.lda_pb2.Document
 
         # s(z), smoothing only bucket, indexed by topic z.
-        self.smoothing_only_bucket = [0.0] * self.model.num_topics
+        self.smoothing_only_bucket = np.zeros(self.model.num_topics, dtype = 'float64')
         self.smoothing_only_sum = 0.0
 
         # r(z, d), document-topic bucket, indexed by topic z.
-        self.doc_topic_bucket = [0.0] * self.model.num_topics
+        self.doc_topic_bucket = np.zeros(self.model.num_topics, dtype = 'float64')
         self.doc_topic_sum = 0.0
 
         # q(z, w, d), topic-word bucket, indexed by topic z.
-        self.topic_word_bucket = [0.0] * self.model.num_topics
+        self.topic_word_bucket = np.zeros(self.model.num_topics, dtype = 'float64')
         self.topic_word_sum = 0.0
         # q_coefficient(z, d), indexed by topic z.
-        self.topic_word_coef = [0.0] * self.model.num_topics
+        self.topic_word_coef = np.zeros(self.model.num_topics, dtype = 'float64')
 
     def load_corpus(self, corpus_dir):
         """Load corpus from a given directory, then initialize the documents
@@ -143,8 +133,8 @@ class SparseLDATrainGibbsSampler(object):
         for word_id, topic_stat in word_topic_stat.iteritems():
             self.model.word_topic_hist[word_id] = \
                     OrderedSparseTopicHistogram(self.model.num_topics)
-            for topic, count in topic_stat.iteritems():
-                self.model.word_topic_hist[word_id].increase_topic(topic, count)
+            [self.model.word_topic_hist[word_id].increase_topic(topic, count) \
+                for topic, count in topic_stat.iteritems()]
 
     def save_model(self, model_dir, iteration = ''):
         """Save lda model to model_dir.
@@ -237,7 +227,7 @@ class SparseLDATrainGibbsSampler(object):
         for document in self.documents:
             self._compute_doc_topic_bucket(document)
             self._update_topic_word_coefficient(document)
-            for word in document.words:
+            for word in document.get_words():
                 self._remove_word_topic(document, word)
                 self._compute_topic_word_bucket(word)
                 new_topic = self._sample_new_topic(document, word, rand)
@@ -249,30 +239,29 @@ class SparseLDATrainGibbsSampler(object):
         """s(z) = alpha(z) * beta / (beta * |V| + N(z))
         """
         self.smoothing_only_sum = 0.0
+        prior_dot = (self.model.hyper_params.topic_prior \
+            * self.model.hyper_params.word_prior)
         for topic in xrange(self.model.num_topics):
             self.smoothing_only_bucket[topic] = \
-                    self.model.hyper_params.topic_prior * \
-                    self.model.hyper_params.word_prior / \
-                    (self.word_prior_sum + self.model.global_topic_hist[topic])
+                prior_dot / (self.word_prior_sum + self.model.global_topic_hist[topic])
             self.smoothing_only_sum += self.smoothing_only_bucket[topic]
 
     def _compute_doc_topic_bucket(self, document):
         """r(z, d) = N(z|d) * beta / (beta * |V| + N(z))
         """
         self.doc_topic_sum = 0.0
-        self.doc_topic_bucket = [0] * self.model.num_topics
-        for non_zero in document.doc_topic_hist.non_zeros:
+        self.doc_topic_bucket = np.zeros(self.model.num_topics, dtype = 'float64')
+        for non_zero in document.doc_topic_hist.get_non_zeros():
             self.doc_topic_bucket[non_zero.topic] = \
                     non_zero.count * self.model.hyper_params.word_prior / \
-                    (self.word_prior_sum +
-                    self.model.global_topic_hist[non_zero.topic])
+                    (self.word_prior_sum + self.model.global_topic_hist[non_zero.topic])
             self.doc_topic_sum += self.doc_topic_bucket[non_zero.topic]
 
     def _initialize_topic_word_coefficient(self):
         """q_coefficient(z) = alpha(z) / (beta * |V| + N(z)),
         """
-        for topic in xrange(self.model.num_topics):
-            self.topic_word_coef[topic] = \
+        for topic, topic_word_coef in enumerate(self.topic_word_coef):
+            topic_word_coef = \
                     self.model.hyper_params.topic_prior / \
                     (self.word_prior_sum + self.model.global_topic_hist[topic])
 
@@ -282,8 +271,7 @@ class SparseLDATrainGibbsSampler(object):
         for non_zero in document.doc_topic_hist.non_zeros:
             self.topic_word_coef[non_zero.topic] = \
                     (self.model.hyper_params.topic_prior + non_zero.count) / \
-                    (self.word_prior_sum +
-                    self.model.global_topic_hist[non_zero.topic])
+                    (self.word_prior_sum + self.model.global_topic_hist[non_zero.topic])
 
     def _reset_topic_word_coefficient(self, document):
         """q_coefficient(z) = alpha(z) / (beta * |V| + N(z)),
@@ -291,8 +279,7 @@ class SparseLDATrainGibbsSampler(object):
         for non_zero in document.doc_topic_hist.non_zeros:
             self.topic_word_coef[non_zero.topic] = \
                     self.model.hyper_params.topic_prior / \
-                    (self.word_prior_sum +
-                    self.model.global_topic_hist[non_zero.topic])
+                    (self.word_prior_sum + self.model.global_topic_hist[non_zero.topic])
 
     def _compute_topic_word_bucket(self, word):
         """q(z, w, d) = N(w|z) * (alpha(z) + N(z|d)) / (beta * |V| + N(z))
@@ -314,8 +301,7 @@ class SparseLDATrainGibbsSampler(object):
         updated_topic_count = document.decrease_topic(word.topic, 1)
 
         self.smoothing_only_bucket[word.topic] = \
-                self.model.hyper_params.topic_prior * \
-                self.model.hyper_params.word_prior / \
+                self.model.hyper_params.topic_prior * self.model.hyper_params.word_prior / \
                 (self.word_prior_sum + self.model.global_topic_hist[word.topic])
         self.smoothing_only_sum += self.smoothing_only_bucket[word.topic]
 
@@ -337,8 +323,7 @@ class SparseLDATrainGibbsSampler(object):
         updated_topic_count = document.increase_topic(word.topic, 1)
 
         self.smoothing_only_bucket[word.topic] = \
-                self.model.hyper_params.topic_prior * \
-                self.model.hyper_params.word_prior / \
+                self.model.hyper_params.topic_prior * self.model.hyper_params.word_prior / \
                 (self.word_prior_sum + self.model.global_topic_hist[word.topic])
         self.smoothing_only_sum += self.smoothing_only_bucket[word.topic]
 
@@ -356,15 +341,14 @@ class SparseLDATrainGibbsSampler(object):
 
         Returns the new topic.
         """
-        total_mass = self.smoothing_only_sum + self.doc_topic_sum + \
-                self.topic_word_sum
+        total_mass = self.smoothing_only_sum + self.doc_topic_sum + self.topic_word_sum
         sample = rand.uniform(0.0, total_mass)
 
         # In general, self.topic_word_sum >> self.smoothing_only_sum
         # self.topic_word_sum >> self.doc_topic_sum
         if sample < self.topic_word_sum:
             ordered_sparse_topic_hist = self.model.word_topic_hist[word.id]
-            for non_zero in ordered_sparse_topic_hist.non_zeros:
+            for non_zero in ordered_sparse_topic_hist.get_non_zeros():
                 sample -= self.topic_word_bucket[non_zero.topic]
                 if sample <= 0:
                     return non_zero.topic
@@ -372,7 +356,7 @@ class SparseLDATrainGibbsSampler(object):
             sample -= self.topic_word_sum
             # self.doc_topic_bucket is sparse.
             if sample < self.doc_topic_sum:
-                for non_zero in document.doc_topic_hist.non_zeros:
+                for non_zero in document.doc_topic_hist.get_non_zeros():
                     sample -= self.doc_topic_bucket[non_zero.topic]
                     if sample <= 0:
                         return non_zero.topic

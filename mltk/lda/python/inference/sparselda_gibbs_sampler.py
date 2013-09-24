@@ -3,18 +3,6 @@
 
 # Copyright(c) 2013 python-sparselda project.
 # Author: Lifeng Wang (ofandywang@gmail.com)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 import logging
 import random
@@ -117,7 +105,7 @@ class SparseLDAGibbsSampler(object):
         accumulated_topic_hist = {}
         for i in xrange(self.total_iterations):
             # one iteration
-            for word in document.words:
+            for word in document.get_words():
                 # --
                 document.decrease_topic(word.topic, 1)
 
@@ -128,7 +116,7 @@ class SparseLDAGibbsSampler(object):
                 document.increase_topic(new_topic, 1)
 
             if i >= self.burn_in_iterations:
-                for non_zero in document.doc_topic_hist.non_zeros:
+                for non_zero in document.doc_topic_hist.get_non_zeros():
                     if non_zero.topic in accumulated_topic_hist:
                         accumulated_topic_hist[non_zero.topic] += non_zero.count
                     else:
