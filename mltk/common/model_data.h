@@ -36,7 +36,8 @@ class ModelData {
   bool Save(const std::string& filename) const;
 
   // Initialize with instances.
-  void InitFromInstances(const std::vector<Instance>& instances);
+  void InitFromInstances(const std::vector<Instance>& instances,
+                         int32_t feature_cutoff);
 
   void Clear() {
     label_vocab_.Clear();
@@ -101,6 +102,9 @@ class ModelData {
     return num_active;
   }
 
+  int32_t CalcConditionalProbability(const MemInstance& mem_instance,
+                                     std::vector<double>* prob_dist) const;
+
  private:
   void InitAllFeatures() {
     for (int32_t feature_name_id = 0;
@@ -124,9 +128,9 @@ class ModelData {
 
   Vocabulary label_vocab_;  // label mapping, {y : id}
 
-  Vocabulary featurename_vocab_;  // feature name mapping, {x : id}
+  Vocabulary featurename_vocab_;  // vocabulary of feature names, {x : id}
 
-  FeatureVocabulary feature_vocab_;  // vocabulary of features, f(x, y)
+  FeatureVocabulary feature_vocab_;  // vocabulary of features, {f(x, y) : id}
 
   std::vector<double> lambdas_;  // vector of lambda, weight for feature f(x, y)
                                  // lambdas_.size() == feature_vocab_.size()

@@ -78,8 +78,24 @@ bool ModelData::Save(const std::string& filename) const {
   return true;
 }
 
-void ModelData::InitFromInstances(const std::vector<Instance>& instances) {
+void ModelData::InitFromInstances(const std::vector<Instance>& instances,
+                                  int32_t feature_cutoff) {
   Clear();
+
+  std::map<uint32_t, int32_t> feature_counter;
+  for (size_t n = 0; n < instances.size(); ++n) {
+    int32_t label_id = label_vocab_.Put(instances[n].label());
+    if (label_id > Feature::MAX_LABEL_TYPES) {
+      std::cerr << "error: too many types of labels." << std::endl;
+      exit(1);
+    }
+
+    for (Instance::ConstIterator citer(instances[n]);
+         !citer.Done(); citer.Next()) {
+      int32_t feature_name_id = featurename_vocab_.Put(citer.FeatureName());
+      feature_counter[Feature(label_id, feature_name_id).Body()]++;
+    }
+  }
 
   for (size_t n = 0; n < instances.size(); ++n) {
     int32_t label_id = label_vocab_.Put(instances[n].label());
@@ -91,7 +107,10 @@ void ModelData::InitFromInstances(const std::vector<Instance>& instances) {
     for (Instance::ConstIterator citer(instances[n]);
          !citer.Done(); citer.Next()) {
       int32_t feature_name_id = featurename_vocab_.Put(citer.FeatureName());
-      feature_vocab_.Put(Feature(label_id, feature_name_id));
+      Feature feature(label_id, feature_name_id);
+      if (feature_counter[feature.Body()] > feature_cutoff) {
+        feature_vocab_.Put(feature);
+      }
     }
   }
 
@@ -112,6 +131,47 @@ void ModelData::FormatInstance(const Instance& instance,
       mem_instance->AddFeature(feature_name_id, citer.FeatureValue());
     }
   }
+}
+
+int32_t ModelData::CalcConditionalProbability(
+    const MemInstance& mem_instance, std::vector<double>* prob_dist) const {
+  std::vector<double> powv(NumClasses(), 0.0);
+
+  for (MemInstance::ConstIterator citer(mem_instance);
+       !citer.Done(); citer.Next()) {
+    const std::vector<int32_t>& feature_ids = FeatureIds(citer.FeatureNameId());
+    for (size_t i = 0; i < feature_ids.size(); ++i) {
+      const int32_t feature_id = feature_ids[i];
+      powv[FeatureAt(feature_id).LabelId()]
+          += lambdas_[feature_id] * citer.FeatureValue();
+    }
+  }
+
+  std::vector<double>::const_iterator pmax
+      = max_element(powv.begin(), powv.end());
+  double sum = 0.0;
+  double offset = std::max(0.0, *pmax - 700);  // to avoid overflow
+  for (int32_t label_id = 0; label_id < NumClasses(); ++label_id) {
+    double pow_value = powv[label_id] - offset;
+    double prod = exp(pow_value);  // exp(w * x)
+    assert(prod != 0);
+
+    (*prob_dist)[label_id] = prod;
+    sum += prod;
+  }
+
+  int32_t max_label = 0;
+  if (sum > 0.0) {
+    for (int32_t label_id = 0; label_id < NumClasses(); ++label_id) {
+      (*prob_dist)[label_id] /= sum;
+      if ((*prob_dist)[label_id] > (*prob_dist)[max_label]) {
+        max_label = label_id;
+      }
+    }
+  }
+  assert(max_label >= 0);
+
+  return max_label;
 }
 
 }  // namespace common

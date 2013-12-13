@@ -51,7 +51,7 @@ TEST(ModelData, InitFromInstances) {
   instances.push_back(instance2);
 
   ModelData model_data;
-  model_data.InitFromInstances(instances);
+  model_data.InitFromInstances(instances, 0);
   EXPECT_EQ(2, model_data.NumClasses());
   EXPECT_EQ(6, model_data.NumFeatures());
   EXPECT_EQ(0, model_data.NumActiveFeatures());
@@ -136,5 +136,22 @@ TEST_F(ModelDataTest, Lambdas) {
   for (size_t i = 0; i < lambdas2.size(); ++i) {
     EXPECT_EQ(0, lambdas2[i]);
   }
+}
+
+TEST_F(ModelDataTest, CalcConditionalProbability) {
+  Instance instance;
+  instance.set_label("-1");
+  instance.AddFeature("100", 0.5);
+  instance.AddFeature("119", 0.9);
+  MemInstance mem_instance;
+  model_data_.FormatInstance(instance, &mem_instance);
+
+  std::vector<double> prob_dist(model_data_.NumClasses());
+  int32_t max_label_id = model_data_.CalcConditionalProbability(mem_instance,
+                                                                &prob_dist);
+  EXPECT_EQ(2, prob_dist.size());
+  EXPECT_EQ(0, max_label_id);
+  EXPECT_EQ(.94365970390140463, prob_dist[0]);
+  EXPECT_EQ(.05634029609859529, prob_dist[1]);
 }
 

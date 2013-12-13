@@ -12,7 +12,7 @@ sys.path.append('..')
 from common.document import Document
 from common.model import Model
 from common.vocabulary import Vocabulary
-from model_evaluator import ModelEvaluator
+import model_evaluator
 
 class ModelEvaluatorTest(unittest.TestCase):
 
@@ -21,8 +21,6 @@ class ModelEvaluatorTest(unittest.TestCase):
         self.model.load('../testdata/lda_model')
         self.vocabulary = Vocabulary()
         self.vocabulary.load('../testdata/vocabulary.dat')
-
-        self.model_evaluator = ModelEvaluator(self.model, self.vocabulary)
 
     def test_compute_loglikelihood(self):
         doc_tokens = ['macbook', 'ipad',  # exist in vocabulary and model
@@ -35,7 +33,7 @@ class ModelEvaluatorTest(unittest.TestCase):
                 doc_tokens, rand, self.vocabulary, self.model)
         documents = [document, document]
         self.assertEqual(-14.113955684239654,
-                self.model_evaluator.compute_loglikelihood(documents))
+                model_evaluator.compute_loglikelihood(self.model, self.vocabulary, documents))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,20 +1,8 @@
-#!/usr/bin/env  python
+#!/usr/bin/env python
 # coding=utf-8
 
 # Copyright(c) 2013 python-sparselda project.
 # Author: Lifeng Wang (ofandywang@gmail.com)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 import unittest
 
@@ -26,8 +14,8 @@ class OrderedSparseTopicHistogramTest(unittest.TestCase):
         self.num_topics = 20
         self.ordered_sparse_topic_hist = \
                 OrderedSparseTopicHistogram(self.num_topics)
-        for i in xrange(10):
-            self.ordered_sparse_topic_hist.increase_topic(i, i + 1)
+        [self.ordered_sparse_topic_hist.increase_topic(i, i + 1) \
+            for i in xrange(10)]
 
     def test_ordered_sparse_topic_hist(self):
         self.assertEqual(10, len(self.ordered_sparse_topic_hist.non_zeros))
@@ -60,6 +48,13 @@ class OrderedSparseTopicHistogramTest(unittest.TestCase):
             self.assertEqual(i + 1, self.ordered_sparse_topic_hist.count(i))
         for i in xrange(10, 20):
             self.assertEqual(0, self.ordered_sparse_topic_hist.count(i))
+
+    def test_get_non_zeros(self):
+      i = 9
+      for non_zero in self.ordered_sparse_topic_hist.get_non_zeros():
+          self.assertEqual(i, non_zero.topic)
+          self.assertEqual(i + 1, non_zero.count)
+          i = i - 1
 
     def test_increase_topic(self):
         for i in xrange(20):

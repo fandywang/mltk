@@ -3,18 +3,6 @@
 
 # Copyright(c) 2013 python-sparselda project.
 # Author: Lifeng Wang (ofandywang@gmail.com)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 import random
 
@@ -52,7 +40,7 @@ class Document(object):
             word_index = vocabulary.word_index(token)
             if (word_index != -1 and
                     (model == None or model.has_word(word_index))):
-                # initialize a random topic for cur word
+                # initialize a random topic for current word
                 topic = rand.randint(0, self.num_topics - 1)
                 self.words.append(Word(word_index, topic))
                 self.doc_topic_hist.increase_topic(topic, 1)
@@ -81,6 +69,10 @@ class Document(object):
 
     def num_words(self):
         return len(self.words)
+
+    def get_words(self):
+        for word in self.words:
+            yield word
 
     def get_topic_count(self, topic):
         """Returns N(z|d).
